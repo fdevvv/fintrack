@@ -1,0 +1,111 @@
+import { useEffect } from 'react';
+import { inputStyle, cardStyle, tagStyle } from '@/utils/styles';
+import { SECTIONS, RUBRO_EMOJI, getSubIcon } from '@/utils/constants';
+
+export function ST({ children, color = '#7c6cf0' }) {
+  return <h2 style={{ fontSize:16,fontWeight:800,color:'#e8e8f0',margin:'24px 0 16px',paddingLeft:12,borderLeft:`3px solid ${color}` }}>{children}</h2>;
+}
+
+export function Inp({ label, value, onChange, placeholder, type = 'text', style: extra }) {
+  return (
+    <div style={{ marginBottom:12, ...extra }}>
+      {label && <label style={{ display:'block',fontSize:11,fontWeight:600,color:'#6c6c84',marginBottom:5 }}>{label}</label>}
+      <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} inputMode={type==='number'?'numeric':undefined} style={inputStyle} />
+    </div>
+  );
+}
+
+export function Sel({ label, value, onChange, options, style: extra }) {
+  return (
+    <div style={{ marginBottom:12, ...extra }}>
+      {label && <label style={{ display:'block',fontSize:11,fontWeight:600,color:'#6c6c84',marginBottom:5 }}>{label}</label>}
+      <select value={value} onChange={e => onChange(e.target.value)} style={{ ...inputStyle,appearance:'none',WebkitAppearance:'none',backgroundImage:"url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235c5c72' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\")",backgroundRepeat:'no-repeat',backgroundPosition:'right 12px center',paddingRight:32 }}>
+        {options.map((o,i) => <option key={i} value={o.v}>{o.l}</option>)}
+      </select>
+    </div>
+  );
+}
+
+export function Btn({ children, color, onClick, disabled, style: s }) {
+  return (
+    <button onClick={onClick} disabled={disabled} style={{ width:'100%',padding:12,borderRadius:12,border:'none',background:disabled?'#2a2a3a':color,color:'#fff',fontSize:14,fontWeight:700,cursor:disabled?'default':'pointer',marginBottom:12,opacity:disabled?0.5:1,transition:'all .15s',...s }}>
+      {children}
+    </button>
+  );
+}
+
+export function Pnl({ title, children }) {
+  return (
+    <div style={{ ...cardStyle,marginBottom:14,padding:16 }}>
+      <h3 style={{ fontSize:13,fontWeight:700,color:'#8888a0',margin:'0 0 14px',textTransform:'uppercase',letterSpacing:'0.5px' }}>{title}</h3>
+      {children}
+    </div>
+  );
+}
+
+export function Divider() {
+  return <hr style={{ border:'none',borderTop:'1px solid rgba(255,255,255,0.05)',margin:'20px 0' }} />;
+}
+
+export function Toast({ toast, onClear }) {
+  useEffect(() => { if (toast) { const t = setTimeout(onClear, 3000); return () => clearTimeout(t); } }, [toast]);
+  if (!toast) return null;
+  return (
+    <div style={{ position:'fixed',bottom:90,left:'50%',transform:'translateX(-50%)',background:toast.e?'#f06070':'#2dd4a8',color:toast.e?'#fff':'#0a0a12',padding:'10px 20px',borderRadius:12,fontSize:13,fontWeight:600,zIndex:9999,boxShadow:'0 8px 32px rgba(0,0,0,0.4)',maxWidth:'90vw',textAlign:'center' }}>
+      {toast.m}
+    </div>
+  );
+}
+
+export function ConfirmModal({ show, title, message, onConfirm, onCancel }) {
+  if (!show) return null;
+  return (
+    <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.7)',backdropFilter:'blur(4px)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10000,padding:20 }} onClick={onCancel}>
+      <div style={{ background:'#14141e',borderRadius:16,padding:24,maxWidth:360,width:'100%',border:'1px solid rgba(255,255,255,0.08)' }} onClick={e => e.stopPropagation()}>
+        <div style={{ fontSize:16,fontWeight:700,color:'#e8e8f0',marginBottom:8 }}>{title}</div>
+        <div style={{ fontSize:13,color:'#8888a0',lineHeight:1.5,marginBottom:20 }}>{message}</div>
+        <div style={{ display:'flex',gap:10 }}>
+          <button onClick={onCancel} style={{ flex:1,padding:10,borderRadius:10,border:'1px solid rgba(255,255,255,0.08)',background:'transparent',color:'#8888a0',fontSize:13,fontWeight:600,cursor:'pointer' }}>Cancelar</button>
+          <button onClick={onConfirm} style={{ flex:1,padding:10,borderRadius:10,border:'none',background:'#f06070',color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer' }}>Eliminar</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function ItemIcon({ item }) {
+  const catName = item.categories?.name || item.category_name || '';
+  if (catName === 'Suscripciones') {
+    const svg = getSubIcon(item.item_name);
+    if (svg) return <div style={{ width:40,height:40,borderRadius:10,overflow:'hidden',flexShrink:0 }} dangerouslySetInnerHTML={{ __html: svg }} />;
+  }
+  return (
+    <div style={{ width:40,height:40,borderRadius:10,background:'rgba(255,255,255,0.05)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0 }}>
+      {RUBRO_EMOJI[catName] || item.categories?.icon || '📎'}
+    </div>
+  );
+}
+
+export function MonthBar({ sel, onSel }) {
+  const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  return (
+    <div style={{ display:'flex',gap:6,flexWrap:'wrap',padding:'0 0 8px' }}>
+      {[{ l:'Todos', v:-1 }, ...months.map((m,i) => ({ l:m, v:i }))].map(c => (
+        <button key={c.v} onClick={() => onSel(c.v)} style={{ padding:'6px 12px',borderRadius:20,border:'none',fontSize:12,fontWeight:600,background:sel===c.v?'#7c6cf0':'rgba(255,255,255,0.05)',color:sel===c.v?'#fff':'#6c6c84',cursor:'pointer',whiteSpace:'nowrap',transition:'all .2s' }}>
+          {c.l}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export function SectionTag({ section }) {
+  const s = SECTIONS[section];
+  if (!s) return null;
+  return <span style={{ ...tagStyle, fontSize:10, background:`${s.color}20`, color:s.color }}>{s.short}</span>;
+}
+
+export function CuotaTag({ current, total }) {
+  if (!total || total <= 1) return null;
+  return <span style={{ ...tagStyle, fontSize:10, background:'rgba(124,108,240,0.12)', color:'#a8a0f8' }}>Cuota {current}/{total}</span>;
+}
