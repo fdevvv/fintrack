@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { ticketService } from '@/services/tickets';
+import { ticketService } from '@/services/tickets.service';
 import { Mn } from '@/utils/money';
 import { inputStyle, cardStyle } from '@/utils/styles';
 import { Btn } from '@/components/ui/Shared';

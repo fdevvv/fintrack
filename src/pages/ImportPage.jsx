@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useStore } from '@/stores/useStore';
+import { useUiStore } from '@/stores/uiStore';
 import { RUBRO_EMOJI } from '@/utils/constants';
 import { Mn } from '@/utils/money';
-import { dolarService } from '@/services/dolar';
+import { dolarService } from '@/services/dolar.service';
+import { useAddTransaction } from '@/hooks/transactions/useAddTransaction';
 import { ST, Sel, Btn } from '@/components/ui/Shared';
 
 const PDFParser = {
@@ -29,7 +31,9 @@ const PDFParser = {
 };
 
 export function ImportPage() {
-  const { year, transactions, showToast, addWithInstallments, categories } = useStore();
+  const { year, transactions, categories } = useStore();
+  const { showToast } = useUiStore();
+  const { add } = useAddTransaction();
   const [card,setCard]=useState('');const [fileName,setFileName]=useState('');const [parsing,setParsing]=useState(false);
   const [parsed,setParsed]=useState(null);const [usdRate,setUsdRate]=useState(null);const [importing,setImporting]=useState(false);
   const [pdfReady,setPdfReady]=useState(!!window.pdfjsLib);const fileRef=useRef(null);
@@ -40,7 +44,7 @@ export function ImportPage() {
 
   const toggle=(idx)=>setParsed(p=>p.map((g,i)=>i===idx?{...g,selected:!g.selected}:g));
 
-  const doImport=async()=>{const sel=parsed.filter(g=>g.selected);if(!sel.length)return;setImporting(true);const mes=new Date().getMonth()+1;let c=0;for(const g of sel){let cuotas=1,mpc;if(g.cuotaTotal>0&&g.cuotaActual>0){cuotas=g.cuotaTotal-g.cuotaActual+1;mpc=g.isUSD?g.montoARS:g.monto;}else{mpc=g.isUSD?g.montoARS:g.monto;}const cat=categories.find(x=>x.name===g.rubro&&x.type==='expense');await addWithInstallments({item_name:g.nombre,description:g.nombre,category_id:cat?.id||null,section:g.tarjeta,amount_per_installment:mpc,installment_total:cuotas,start_month:mes,year,currency:'ARS',payment_method:'credit_card',usd_amount:g.isUSD?g.monto:null,usd_rate:g.isUSD?g.rateUsed:null,source:'imported'});c++;}showToast(`✓ ${c} gastos importados`);setTimeout(()=>{setParsed(null);setFileName('');setImporting(false);if(fileRef.current)fileRef.current.value='';},2000);};
+  const doImport=async()=>{const sel=parsed.filter(g=>g.selected);if(!sel.length)return;setImporting(true);const mes=new Date().getMonth()+1;let c=0;for(const g of sel){let cuotas=1,mpc;if(g.cuotaTotal>0&&g.cuotaActual>0){cuotas=g.cuotaTotal-g.cuotaActual+1;mpc=g.isUSD?g.montoARS:g.monto;}else{mpc=g.isUSD?g.montoARS:g.monto;}const cat=categories.find(x=>x.name===g.rubro&&x.type==='expense');await add({item_name:g.nombre,category_id:cat?.id||null,section:g.tarjeta,amount:mpc,cuotas,start_month:mes,destino:'tarjeta',usd_amount:g.isUSD?g.monto:null,usd_rate:g.isUSD?g.rateUsed:null});c++;}showToast(`✓ ${c} gastos importados`);setTimeout(()=>{setParsed(null);setFileName('');setImporting(false);if(fileRef.current)fileRef.current.value='';},2000);};
 
   const selC=parsed?parsed.filter(g=>g.selected).length:0;
   const selT=parsed?parsed.filter(g=>g.selected).reduce((s,g)=>s+(g.isUSD?g.montoARS:g.monto),0):0;

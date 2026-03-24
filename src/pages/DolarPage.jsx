@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { dolarService } from '@/services/dolar';
+import { dolarService } from '@/services/dolar.service';
 import { INVESTMENT_OPTIONS } from '@/utils/constants';
 import { cardStyle } from '@/utils/styles';
 import { ST, Btn } from '@/components/ui/Shared';

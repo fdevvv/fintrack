@@ -1,50 +1,27 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useStore } from '@/stores/useStore';
+import { useUiStore } from '@/stores/uiStore';
 import { MONTHS, SECTIONS, RUBRO_EMOJI } from '@/utils/constants';
 import { Mn } from '@/utils/money';
-import { exportToExcel } from '@/services/export';
+import { exportToExcel } from '@/services/export.service';
+import { useTransactions } from '@/hooks/transactions/useTransactions';
+import { useDeleteTransaction } from '@/hooks/transactions/useDeleteTransaction';
 import { ST, MonthBar, ItemIcon, SectionTag, CuotaTag, ConfirmModal } from '@/components/ui/Shared';
 
 export function ListPage() {
-  const { transactions, month, setMonth, deleteTransaction, showToast } = useStore();
+  const { month, setMonth, income, year } = useStore();
+  const { showToast } = useUiStore();
   const [search, setSearch] = useState('');
   const [filterRub, setFilterRub] = useState('');
   const [filterSec, setFilterSec] = useState('');
   const [delTarget, setDelTarget] = useState(null);
 
-  const expenses = useMemo(() => transactions.filter(t => t.type === 'expense'), [transactions]);
-  const rubrosInData = useMemo(() => [...new Set(expenses.map(t => t.categories?.name || 'Otros'))].sort(), [expenses]);
-  const secsInData = useMemo(() => [...new Set(expenses.map(t => t.section || 'OTROS'))], [expenses]);
-
-  const filtered = useMemo(() => {
-    let f = expenses;
-    if (month >= 0) f = f.filter(t => new Date(t.transaction_date).getMonth() === month);
-    if (search.trim()) { const s = search.toUpperCase(); f = f.filter(t => (t.item_name||t.description||'').toUpperCase().includes(s)); }
-    if (filterRub) f = f.filter(t => (t.categories?.name||'Otros') === filterRub);
-    if (filterSec) f = f.filter(t => (t.section||'OTROS') === filterSec);
-    return f;
-  }, [expenses, month, search, filterRub, filterSec]);
-
-  const grouped = useMemo(() => {
-    const map = {};
-    filtered.forEach(t => {
-      const key = `${(t.item_name||'').toUpperCase()}||${t.section||'OTROS'}`;
-      if (!map[key]) map[key] = { ...t, items:[], totalAmount:0, maxInstallmentTotal:t.installment_total||1 };
-      map[key].items.push(t);
-      map[key].totalAmount += t.amount_cents;
-      if ((t.installment_total||1) > map[key].maxInstallmentTotal) map[key].maxInstallmentTotal = t.installment_total;
-    });
-    return Object.values(map).sort((a,b) => {
-      const ra=a.categories?.name||'Otros', rb=b.categories?.name||'Otros';
-      return ra===rb ? b.totalAmount-a.totalAmount : ra.localeCompare(rb);
-    });
-  }, [filtered]);
-
-  const total = filtered.reduce((s,t) => s+t.amount_cents, 0);
+  const { filtered, grouped, total, rubrosInData, secsInData } = useTransactions({ month, search, filterRub, filterSec });
+  const { remove } = useDeleteTransaction();
 
   const handleDelete = async () => {
     if (!delTarget) return;
-    try { await deleteTransaction(delTarget.id, delTarget.installment_group_id); showToast(`✓ Eliminado`); }
+    try { await remove(delTarget.id, delTarget.installment_group_id); showToast('✓ Eliminado'); }
     catch { showToast('Error', true); }
     setDelTarget(null);
   };
@@ -110,8 +87,8 @@ export function ListPage() {
       {/* Export */}
       {filtered.length > 0 && (
         <button onClick={async () => {
-          try { await exportToExcel(filtered, useStore.getState().income, useStore.getState().year); useStore.getState().showToast('✓ Excel descargado'); }
-          catch (e) { useStore.getState().showToast('Error: ' + e.message, true); }
+          try { await exportToExcel(filtered, income, year); showToast('✓ Excel descargado'); }
+          catch (e) { showToast('Error: ' + e.message, true); }
         }} style={{ width:'100%',padding:'10px',borderRadius:10,border:'1px solid rgba(45,212,168,0.2)',background:'rgba(45,212,168,0.06)',color:'#2dd4a8',fontSize:12,fontWeight:600,cursor:'pointer',marginTop:8 }}>
           📊 Exportar Detalle a Excel
         </button>

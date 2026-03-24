@@ -1,58 +1,39 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useStore } from '@/stores/useStore';
+import { useUiStore } from '@/stores/uiStore';
 import { MONTHS, RUBRO_EMOJI, COLORS } from '@/utils/constants';
 import { Mn } from '@/utils/money';
 import { cardStyle, tooltipStyle, tooltipLabel, tooltipItem, tooltipWrapper, tooltipCursor } from '@/utils/styles';
-import { exportToExcel } from '@/services/export';
+import { exportToExcel } from '@/services/export.service';
+import { useTransactions } from '@/hooks/transactions/useTransactions';
+import { useDeleteTransaction } from '@/hooks/transactions/useDeleteTransaction';
 import { ST, MonthBar, ItemIcon, Pnl, ConfirmModal } from '@/components/ui/Shared';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 const METHODS = { cash:'Efectivo', transfer:'Transferencia', qr_debit:'QR Débito', debit_card:'Débito' };
 
 export function GastosPage() {
-  const { transactions, income, deleteTransaction, showToast } = useStore();
+  const { income, year } = useStore();
+  const { showToast } = useUiStore();
   const [filterMethod, setFilterMethod] = useState('');
   const [localMonth, setLocalMonth] = useState(new Date().getMonth());
   const [delTarget, setDelTarget] = useState(null);
 
-  // Only manual daily expenses
-  const gastos = useMemo(() =>
-    transactions.filter(t =>
-      t.type === 'expense' &&
-      t.source === 'manual'
-    ),
-  [transactions]);
+  const { filtered: rawFiltered, total, catBreakdown: catData, monthComparison } = useTransactions({
+    month: localMonth,
+    filterMethod,
+    sourceFilter: 'manual',
+  });
+  const { remove } = useDeleteTransaction();
 
-  const filtered = useMemo(() => {
-    let f = gastos;
-    if (localMonth >= 0) f = f.filter(t => new Date(t.transaction_date).getMonth() === localMonth);
-    if (filterMethod) f = f.filter(t => t.payment_method === filterMethod);
-    return f.sort((a,b) => new Date(b.transaction_date) - new Date(a.transaction_date));
-  }, [gastos, localMonth, filterMethod]);
+  const filtered = [...rawFiltered].sort((a, b) => new Date(b.transaction_date) - new Date(a.transaction_date));
 
-  const total = filtered.reduce((s,t) => s + t.amount_cents, 0);
-
-  // Category breakdown for pie
-  const catData = useMemo(() => {
-    const m = {};
-    filtered.forEach(t => { const r = t.categories?.name||'Otros'; m[r]=(m[r]||0)+t.amount_cents; });
-    return Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([name,total])=>({name,total}));
-  }, [filtered]);
-
-  // Monthly comparison by category (bar chart)
-  const compData = useMemo(() => {
-    const mo = localMonth >= 0 ? localMonth : new Date().getMonth();
-    const prev = mo === 0 ? 11 : mo - 1;
-    const curMonth = {}, prevMonth = {};
-    gastos.forEach(t => {
-      const m = new Date(t.transaction_date).getMonth();
-      const cat = t.categories?.name || 'Otros';
-      if (m === mo) curMonth[cat] = (curMonth[cat]||0) + t.amount_cents;
-      if (m === prev) prevMonth[cat] = (prevMonth[cat]||0) + t.amount_cents;
-    });
-    const allCats = [...new Set([...Object.keys(curMonth), ...Object.keys(prevMonth)])];
-    return allCats.map(cat => ({ name:cat, [MONTHS[mo]]:curMonth[cat]||0, [MONTHS[prev]]:prevMonth[cat]||0 })).sort((a,b) => (b[MONTHS[mo]]||0) - (a[MONTHS[mo]]||0));
-  }, [gastos, localMonth]);
+  const { currentMonthIdx, prevMonthIdx, data: compRaw } = monthComparison;
+  const compData = compRaw.map(d => ({
+    name: d.name,
+    [MONTHS[currentMonthIdx]]: d.current,
+    [MONTHS[prevMonthIdx]]: d.previous,
+  }));
 
   const ttS = tooltipStyle;
   const chip = (active,c) => ({ padding:'5px 10px',borderRadius:16,border:'none',fontSize:10,fontWeight:600,background:active?(c||'#7c6cf0'):'rgba(255,255,255,0.05)',color:active?'#fff':'#6c6c84',cursor:'pointer',whiteSpace:'nowrap' });
@@ -166,14 +147,14 @@ export function GastosPage() {
       {/* Export */}
       {filtered.length > 0 && (
         <button onClick={async () => {
-          try { await exportToExcel(filtered, useStore.getState().income, useStore.getState().year); showToast('✓ Excel descargado'); }
+          try { await exportToExcel(filtered, income, year); showToast('✓ Excel descargado'); }
           catch (e) { showToast('Error: ' + e.message, true); }
         }} style={{ width:'100%',padding:'10px',borderRadius:10,border:'1px solid rgba(45,212,168,0.2)',background:'rgba(45,212,168,0.06)',color:'#2dd4a8',fontSize:12,fontWeight:600,cursor:'pointer',marginTop:8 }}>
           📊 Exportar Gastos del Mes a Excel
         </button>
       )}
 
-      <ConfirmModal show={!!delTarget} title="Eliminar" message={delTarget?`¿Eliminar "${delTarget.item_name}"?`:''} onConfirm={async()=>{if(delTarget){await deleteTransaction(delTarget.id);showToast('✓ Eliminado');}setDelTarget(null);}} onCancel={()=>setDelTarget(null)} />
+      <ConfirmModal show={!!delTarget} title="Eliminar" message={delTarget?`¿Eliminar "${delTarget.item_name}"?`:''} onConfirm={async()=>{if(delTarget){await remove(delTarget.id);showToast('✓ Eliminado');}setDelTarget(null);}} onCancel={()=>setDelTarget(null)} />
       <div style={{ height:80 }} />
     </div>
   );

@@ -42,6 +42,18 @@ export const budgetsService = {
     if (error) throw error;
   },
 
+  async deleteByCategory(categoryId, year, month) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) throw new Error('No authenticated user');
+
+    const { error } = await supabase
+      .from('budgets')
+      .delete()
+      .match({ category_id: categoryId, year, month, user_id: session.user.id });
+
+    if (error) throw error;
+  },
+
   /**
    * Get budgets with actual spending for a given month.
    * Returns each budget with its current spending and remaining amount.

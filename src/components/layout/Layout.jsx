@@ -1,10 +1,12 @@
 import { useState, useRef } from 'react';
 import { useStore } from '@/stores/useStore';
-import { profileService } from '@/services/profile';
+import { useUiStore } from '@/stores/uiStore';
+import { profileService } from '@/services/profile.service';
 import { inputStyle } from '@/utils/styles';
 
 function ProfileSection() {
-  const { profile, updateProfile, showToast } = useStore();
+  const { profile, updateProfile } = useStore();
+  const { showToast } = useUiStore();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState('');
   const fileRef = useRef(null);
@@ -132,7 +134,8 @@ export function Sidebar({ active, onNav, year, years, setYear, onSignOut }) {
 }
 
 export function TopBar({ year, years, setYear, syncing, onSignOut }) {
-  const { profile, updateProfile, showToast } = useStore();
+  const { profile, updateProfile } = useStore();
+  const { showToast } = useUiStore();
   const [showLogout, setShowLogout] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [editName, setEditName] = useState('');

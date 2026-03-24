@@ -1,9 +1,11 @@
 import { create } from 'zustand';
-import { transactionsService } from '@/services/transactions';
-import { incomeService } from '@/services/income';
-import { yearsService } from '@/services/years';
-import { categoriesService } from '@/services/categories';
-import { profileService } from '@/services/profile';
+import { transactionsService } from '@/services/transactions.service';
+import { incomeService } from '@/services/income.service';
+import { yearsService } from '@/services/years.service';
+import { categoriesService } from '@/services/categories.service';
+import { profileService } from '@/services/profile.service';
+import { budgetsService } from '@/services/budgets.service';
+import { useUiStore } from '@/stores/uiStore';
 
 export const useStore = create((set, get) => ({
   // State
@@ -16,21 +18,15 @@ export const useStore = create((set, get) => ({
   income: new Array(12).fill(0),
   profile: null,
   budgets: {},
-  syncing: false,
-  toast: null,
 
   // Navigation
   setPage: (page) => set({ page }),
   setYear: (year) => { set({ year, month: -1 }); get().loadAll(); },
   setMonth: (month) => set({ month }),
 
-  // Toast
-  showToast: (m, e = false) => set({ toast: { m, e } }),
-  clearToast: () => set({ toast: null }),
-
   // Load everything for current year
   loadAll: async () => {
-    set({ syncing: true });
+    useUiStore.getState().setSyncing(true);
     const { year } = get();
     try {
       // First check if user has any years — if not, auto-setup
@@ -49,53 +45,38 @@ export const useStore = create((set, get) => ({
       }
 
       const activeYear = get().year;
-      const [txs, cats, inc, prof] = await Promise.all([
+      const currentMonth = new Date().getMonth() + 1;
+      const [txs, cats, inc, prof, budgetRows] = await Promise.all([
         transactionsService.list(activeYear),
         categoriesService.list(),
         incomeService.list(activeYear),
         profileService.get(),
+        budgetsService.list(activeYear, currentMonth),
       ]);
+      const budgets = {};
+      budgetRows.forEach(b => {
+        const name = b.categories?.name;
+        if (name) budgets[name] = b.limit_cents;
+      });
       set({
         transactions: txs,
         categories: cats,
         income: inc,
         profile: prof,
         years: yrs,
-        syncing: false,
+        budgets,
       });
-      // Load budgets from localStorage
-      try {
-        const stored = localStorage.getItem('ft-budgets');
-        if (stored) set({ budgets: JSON.parse(stored) });
-      } catch {}
+      useUiStore.getState().setSyncing(false);
     } catch (err) {
       console.error('loadAll error:', err);
-      set({ syncing: false });
+      useUiStore.getState().setSyncing(false);
     }
   },
 
-  // Transactions
-  addTransaction: async (tx) => {
-    const data = await transactionsService.create(tx);
-    set(s => ({ transactions: [...s.transactions, data] }));
-    return data;
-  },
-
-  addWithInstallments: async (params) => {
-    const data = await transactionsService.createWithInstallments(params);
-    set(s => ({ transactions: [...s.transactions, ...data] }));
-    return data;
-  },
-
-  deleteTransaction: async (id, groupId) => {
-    if (groupId) {
-      await transactionsService.deleteGroup(groupId);
-      set(s => ({ transactions: s.transactions.filter(t => t.installment_group_id !== groupId) }));
-    } else {
-      await transactionsService.delete(id);
-      set(s => ({ transactions: s.transactions.filter(t => t.id !== id) }));
-    }
-  },
+  // Transactions (pure state setters — logic lives in hooks)
+  appendTransactions: (rows) => set(s => ({ transactions: [...s.transactions, ...(Array.isArray(rows) ? rows : [rows])] })),
+  removeTransaction: (id) => set(s => ({ transactions: s.transactions.filter(t => t.id !== id) })),
+  removeTransactionGroup: (groupId) => set(s => ({ transactions: s.transactions.filter(t => t.installment_group_id !== groupId) })),
 
   // Income
   setIncome: async (month, amount) => {
@@ -119,11 +100,24 @@ export const useStore = create((set, get) => ({
     return cat;
   },
 
-  // Budgets (local storage for now)
-  setBudget: (rubro, monto) => {
-    const budgets = { ...get().budgets, [rubro]: monto };
-    set({ budgets });
-    localStorage.setItem('ft-budgets', JSON.stringify(budgets));
+  // Budgets (Supabase)
+  setBudget: async (rubroName, limitCents) => {
+    const { year, categories, budgets } = get();
+    const month = new Date().getMonth() + 1;
+    const cat = categories.find(c => c.name === rubroName && c.type === 'expense');
+
+    // Optimistic update
+    const newBudgets = { ...budgets };
+    if (limitCents > 0) newBudgets[rubroName] = limitCents;
+    else delete newBudgets[rubroName];
+    set({ budgets: newBudgets });
+
+    if (!cat) return;
+    if (limitCents > 0) {
+      await budgetsService.upsert({ category_id: cat.id, year, month, limit_cents: limitCents, currency: 'ARS' });
+    } else {
+      await budgetsService.deleteByCategory(cat.id, year, month);
+    }
   },
 
   // Profile

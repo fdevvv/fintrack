@@ -1,14 +1,19 @@
 import { useState } from 'react';
 import { useStore } from '@/stores/useStore';
+import { useUiStore } from '@/stores/uiStore';
 import { MONTHS_FULL, SECTIONS, RUBRO_EMOJI } from '@/utils/constants';
 import { Mn } from '@/utils/money';
-import { dolarService } from '@/services/dolar';
-import { transactionsService } from '@/services/transactions';
+import { useAddTransaction } from '@/hooks/transactions/useAddTransaction';
+import { useSyncUsd } from '@/hooks/transactions/useSyncUsd';
 import { ST, Inp, Sel, Btn, Divider } from '@/components/ui/Shared';
 import { TicketScanner } from '@/components/tickets/TicketScanner';
 
 export function AddPage() {
-  const { year, years, categories, budgets, showToast, addWithInstallments, setIncome, addCategory, createYear, setBudget, loadAll } = useStore();
+  const { year, years, categories, budgets, setIncome, addCategory, createYear, setBudget } = useStore();
+  const { showToast } = useUiStore();
+  const { add, loading: addLoading } = useAddTransaction();
+  const { sync, loading: syncLoading } = useSyncUsd();
+  const busy = addLoading || syncLoading;
   const [item, sI] = useState('');
   const [sec, sS] = useState('');
   const [rub, sR] = useState('');
@@ -18,7 +23,6 @@ export function AddPage() {
   const [moneda, setMoneda] = useState('ARS');
   const [payMethod, setPayMethod] = useState('cash');
   const [destino, setDestino] = useState('manual');
-  const [busy, sB] = useState(false);
   const [showTicket, setShowTicket] = useState(false);
   const [ticketData, setTicketData] = useState(null);
   const [ingM, sIM] = useState('');
@@ -32,35 +36,25 @@ export function AddPage() {
   const addG = async () => {
     if (!item || !rub || !monto || Number(monto) <= 0) { showToast('Completá todos los campos', true); return; }
     if (destino === 'tarjeta' && !sec) { showToast('Seleccioná la tarjeta', true); return; }
-    sB(true);
     try {
-      let finalMonto = Math.round(Number(monto));
-      let usdAmount = null, usdRate = null;
-      if (moneda === 'USD') {
-        const rate = await dolarService.getOficialRate();
-        if (!rate) { showToast('Error cotización', true); sB(false); return; }
-        usdAmount = Number(monto); usdRate = rate; finalMonto = Math.round(usdAmount * rate);
-      }
       const catObj = expenseCats.find(c => c.name === rub);
-      const isManual = destino === 'manual';
-      await addWithInstallments({
-        item_name: item.toUpperCase(), description: item.toUpperCase(),
+      const result = await add({
+        item_name: item,
         category_id: catObj?.id || null,
-        section: isManual ? 'OTROS' : sec,
-        amount_per_installment: finalMonto,
-        installment_total: isManual ? 1 : (Number(cuotas) || 1),
-        start_month: Number(mes), year, currency: 'ARS',
-        payment_method: isManual ? payMethod : 'credit_card',
-        usd_amount: usdAmount, usd_rate: usdRate,
-        source: isManual ? 'manual' : 'imported',
+        section: sec,
+        amount: monto,
+        cuotas,
+        start_month: Number(mes),
+        currency: moneda,
+        payment_method: payMethod,
+        destino,
         ticket_items: ticketData?.items || null,
         ticket_image_url: ticketData?.imageUrl || null,
         ticket_total: ticketData?.total || null,
       });
-      showToast(moneda === 'USD' ? `✓ USD ${usdAmount} × $${usdRate} = ${Mn.fmt(finalMonto)}` : '✓ Gasto agregado');
+      showToast(moneda === 'USD' ? `✓ USD ${result.usdAmount} × $${result.usdRate} = ${Mn.fmt(result.finalMonto)}` : '✓ Gasto agregado');
       sI(''); sM(''); setTicketData(null);
     } catch (err) { showToast(err.message || 'Error', true); }
-    sB(false);
   };
 
   const handleTicketConfirm = (data) => {
@@ -71,15 +65,10 @@ export function AddPage() {
   };
 
   const syncUSD = async () => {
-    sB(true);
     try {
-      const rate = await dolarService.getOficialRate();
-      if (!rate) { showToast('Error cotización', true); sB(false); return; }
-      const count = await transactionsService.syncUsdRates(year, rate);
+      const { count, rate } = await sync();
       showToast(`✓ ${count} gastos USD actualizados · $${rate}/USD`);
-      await loadAll();
     } catch { showToast('Error sync USD', true); }
-    sB(false);
   };
 
   return (

@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
-import { supabase } from './services/supabase';
+import { useEffect } from 'react';
 import { useStore } from './stores/useStore';
+import { useUiStore } from './stores/uiStore';
+import { useAuth } from './hooks/auth/useAuth';
 import { Sidebar, MobileNav, TopBar } from './components/layout/Layout';
 import { AuthPage } from './components/auth/AuthPage';
 import { Toast } from './components/ui/Shared';
@@ -13,29 +14,13 @@ import { DolarPage } from './pages/DolarPage';
 import { ConfigPage } from './pages/ConfigPage';
 
 export default function App() {
-  const [session, setSession] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
-  const { page, setPage, year, years, setYear, syncing, toast, clearToast, loadAll } = useStore();
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setAuthLoading(false);
-    });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
+  const { session, authLoading, signOut } = useAuth();
+  const { page, setPage, year, years, setYear, loadAll } = useStore();
+  const { syncing, toast, clearToast } = useUiStore();
 
   useEffect(() => {
     if (session) loadAll();
   }, [session, year]);
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    setSession(null);
-  };
 
   if (authLoading) {
     return (
@@ -94,11 +79,11 @@ export default function App() {
       `}</style>
 
       <div className="ft-app">
-        <Sidebar active={page} onNav={setPage} year={year} years={years} setYear={setYear} onSignOut={handleSignOut} />
+        <Sidebar active={page} onNav={setPage} year={year} years={years} setYear={setYear} onSignOut={signOut} />
 
         <div className="ft-main">
           {/* Mobile header */}
-          <TopBar year={year} years={years} setYear={setYear} syncing={syncing} onSignOut={handleSignOut} />
+          <TopBar year={year} years={years} setYear={setYear} syncing={syncing} onSignOut={signOut} />
           <div className="ft-page">
             {renderPage()}
           </div>

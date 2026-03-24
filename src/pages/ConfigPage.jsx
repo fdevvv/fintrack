@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { useStore } from '@/stores/useStore';
+import { useUiStore } from '@/stores/uiStore';
 import { RUBRO_EMOJI } from '@/utils/constants';
 import { cardStyle, inputStyle } from '@/utils/styles';
-import { categoriesService } from '@/services/categories';
-import { exportToExcel } from '@/services/export';
+import { categoriesService } from '@/services/categories.service';
+import { exportToExcel } from '@/services/export.service';
 import { ST, Btn, Inp, ConfirmModal } from '@/components/ui/Shared';
 
 export function ConfigPage() {
-  const { categories, loadAll, showToast, transactions, income, year } = useStore();
+  const { categories, loadAll, transactions, income, year } = useStore();
+  const { showToast } = useUiStore();
   const [editId, setEditId] = useState(null);
   const [editName, setEditName] = useState('');
   const [editIcon, setEditIcon] = useState('');
