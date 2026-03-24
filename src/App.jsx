@@ -16,9 +16,14 @@ import { ConfigPage } from './pages/ConfigPage';
 import { AdminPage } from './pages/AdminPage';
 
 const PAGE_ROUTES = {
-  dash: '/', add: '/agregar', list: '/detalle',
-  gastos: '/mes', imp: '/importar', dolar: '/dolar',
-  cfg: '/config', admin: '/admin',
+  dash:   '/panel',
+  add:    '/agregar',
+  list:   '/movimientos',
+  gastos: '/mes',
+  imp:    '/importar',
+  dolar:  '/dolar',
+  cfg:    '/configuracion',
+  admin:  '/admin',
 };
 const ROUTE_PAGES = Object.fromEntries(Object.entries(PAGE_ROUTES).map(([k, v]) => [v, k]));
 

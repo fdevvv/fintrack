@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useStore } from '@/stores/useStore';
 import { useUiStore } from '@/stores/uiStore';
 import { MONTHS, RUBRO_EMOJI, COLORS } from '@/utils/constants';
@@ -15,8 +16,19 @@ const METHODS = { cash:'Efectivo', transfer:'Transferencia', qr_debit:'QR', debi
 export function GastosPage() {
   const { income, year } = useStore();
   const { showToast } = useUiStore();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [filterMethod, setFilterMethod] = useState('');
-  const [localMonth, setLocalMonth] = useState(new Date().getMonth());
+  const [localMonth, setLocalMonth] = useState(() => {
+    const m = searchParams.get('m');
+    return m !== null ? Number(m) : new Date().getMonth();
+  });
+
+  const handleMonthChange = (m) => {
+    setLocalMonth(m);
+    const p = {};
+    if (m !== new Date().getMonth()) p.m = m;
+    setSearchParams(p, { replace: true });
+  };
   const [delTarget, setDelTarget] = useState(null);
 
   const { filtered: rawFiltered, total, catBreakdown: catData, monthComparison } = useTransactions({
@@ -54,7 +66,7 @@ export function GastosPage() {
         ))}
       </div>
 
-      <MonthBar sel={localMonth} onSel={setLocalMonth} />
+      <MonthBar sel={localMonth} onSel={handleMonthChange} />
 
       {/* Summary cards */}
       {(() => {

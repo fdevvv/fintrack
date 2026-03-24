@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useStore } from '@/stores/useStore';
 import { useUiStore } from '@/stores/uiStore';
 import { MONTHS, SECTIONS, RUBRO_EMOJI } from '@/utils/constants';
@@ -9,11 +10,29 @@ import { useDeleteTransaction } from '@/hooks/transactions/useDeleteTransaction'
 import { ST, MonthBar, ItemIcon, SectionTag, CuotaTag, ConfirmModal } from '@/components/ui/Shared';
 
 export function ListPage() {
-  const { month, setMonth, income, year } = useStore();
+  const { month: storeMonth, setMonth, income, year } = useStore();
   const { showToast } = useUiStore();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const [month, setLocalMonth] = useState(() => {
+    const m = searchParams.get('m');
+    return m !== null ? Number(m) : storeMonth;
+  });
+  const [filterSec, setFilterSec] = useState(searchParams.get('sec') || '');
+  const [filterRub, setFilterRub] = useState(searchParams.get('rub') || '');
   const [search, setSearch] = useState('');
-  const [filterRub, setFilterRub] = useState('');
-  const [filterSec, setFilterSec] = useState('');
+
+  const updateParams = (m, sec, rub) => {
+    const p = {};
+    if (m >= 0) p.m = m;
+    if (sec) p.sec = sec;
+    if (rub) p.rub = rub;
+    setSearchParams(p, { replace: true });
+  };
+
+  const handleMonth = (m) => { setLocalMonth(m); setMonth(m); updateParams(m, filterSec, filterRub); };
+  const handleSec = (s) => { setFilterSec(s); updateParams(month, s, filterRub); };
+  const handleRub = (r) => { setFilterRub(r); updateParams(month, filterSec, r); };
   const [delTarget, setDelTarget] = useState(null);
 
   const { filtered, grouped, total, rubrosInData, secsInData } = useTransactions({ month, search, filterRub, filterSec });
@@ -38,15 +57,15 @@ export function ListPage() {
       </div>
 
       <div style={{ display:'flex',gap:6,flexWrap:'wrap',marginBottom:6 }}>
-        <button onClick={()=>setFilterSec('')} style={chip(!filterSec)}>Todas</button>
-        {secsInData.map(s => <button key={s} onClick={()=>setFilterSec(filterSec===s?'':s)} style={chip(filterSec===s,SECTIONS[s]?.color)}>{SECTIONS[s]?.short||s}</button>)}
+        <button onClick={()=>handleSec('')} style={chip(!filterSec)}>Todas</button>
+        {secsInData.map(s => <button key={s} onClick={()=>handleSec(filterSec===s?'':s)} style={chip(filterSec===s,SECTIONS[s]?.color)}>{SECTIONS[s]?.short||s}</button>)}
       </div>
       <div style={{ display:'flex',gap:6,flexWrap:'wrap',marginBottom:8 }}>
-        <button onClick={()=>setFilterRub('')} style={{ ...chip(!filterRub),background:!filterRub?'rgba(45,212,168,0.15)':'rgba(255,255,255,0.05)',color:!filterRub?'#2dd4a8':'#6c6c84' }}>Todos rubros</button>
-        {rubrosInData.map(r => <button key={r} onClick={()=>setFilterRub(filterRub===r?'':r)} style={{ ...chip(filterRub===r),background:filterRub===r?'rgba(45,212,168,0.15)':'rgba(255,255,255,0.05)',color:filterRub===r?'#2dd4a8':'#6c6c84' }}>{RUBRO_EMOJI[r]||'📎'} {r}</button>)}
+        <button onClick={()=>handleRub('')} style={{ ...chip(!filterRub),background:!filterRub?'rgba(45,212,168,0.15)':'rgba(255,255,255,0.05)',color:!filterRub?'#2dd4a8':'#6c6c84' }}>Todos rubros</button>
+        {rubrosInData.map(r => <button key={r} onClick={()=>handleRub(filterRub===r?'':r)} style={{ ...chip(filterRub===r),background:filterRub===r?'rgba(45,212,168,0.15)':'rgba(255,255,255,0.05)',color:filterRub===r?'#2dd4a8':'#6c6c84' }}>{RUBRO_EMOJI[r]||'📎'} {r}</button>)}
       </div>
 
-      <MonthBar sel={month} onSel={setMonth} />
+      <MonthBar sel={month} onSel={handleMonth} />
 
       {grouped.length===0 ? (
         <div style={{ textAlign:'center',padding:40,color:'#5c5c72',fontSize:14 }}>Sin gastos{month>=0?` en ${MONTHS[month]}`:''}</div>
