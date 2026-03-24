@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useStore } from './stores/useStore';
 import { useUiStore } from './stores/uiStore';
 import { useAuth } from './hooks/auth/useAuth';
@@ -14,10 +15,31 @@ import { DolarPage } from './pages/DolarPage';
 import { ConfigPage } from './pages/ConfigPage';
 import { AdminPage } from './pages/AdminPage';
 
+const PAGE_ROUTES = {
+  dash: '/', add: '/agregar', list: '/detalle',
+  gastos: '/mes', imp: '/importar', dolar: '/dolar',
+  cfg: '/config', admin: '/admin',
+};
+const ROUTE_PAGES = Object.fromEntries(Object.entries(PAGE_ROUTES).map(([k, v]) => [v, k]));
+
 export default function App() {
   const { session, authLoading, signOut } = useAuth();
   const { page, setPage, year, years, setYear, loadAll, profile } = useStore();
   const { syncing, toast, clearToast } = useUiStore();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // URL → estado al cargar o usar back/forward
+  useEffect(() => {
+    const p = ROUTE_PAGES[location.pathname] || 'dash';
+    if (p !== page) setPage(p);
+  }, [location.pathname]);
+
+  // Navegación: actualiza estado + URL
+  const handleNav = (p) => {
+    setPage(p);
+    navigate(PAGE_ROUTES[p] || '/');
+  };
 
   useEffect(() => {
     if (session) loadAll();
@@ -81,7 +103,7 @@ export default function App() {
       `}</style>
 
       <div className="ft-app">
-        <Sidebar active={page} onNav={setPage} year={year} years={years} setYear={setYear} onSignOut={signOut} isAdmin={profile?.email === 'foschi246@gmail.com'} />
+        <Sidebar active={page} onNav={handleNav} year={year} years={years} setYear={setYear} onSignOut={signOut} isAdmin={profile?.email === 'foschi246@gmail.com'} />
 
         <div className="ft-main">
           {/* Mobile header */}
@@ -91,7 +113,7 @@ export default function App() {
           </div>
         </div>
 
-        <MobileNav active={page} onNav={setPage} isAdmin={profile?.email === 'foschi246@gmail.com'} />
+        <MobileNav active={page} onNav={handleNav} isAdmin={profile?.email === 'foschi246@gmail.com'} />
         <Toast toast={toast} onClear={clearToast} />
       </div>
     </>
