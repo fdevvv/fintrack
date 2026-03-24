@@ -17,9 +17,6 @@ export function useAddTransaction() {
     currency = 'ARS',
     payment_method = 'cash',
     destino = 'manual',
-    ticket_items = null,
-    ticket_image_url = null,
-    ticket_total = null,
     usd_amount: preUsdAmount = null,
     usd_rate: preUsdRate = null,
   }) => {
@@ -30,7 +27,7 @@ export function useAddTransaction() {
       let usdRate = preUsdRate;
 
       if (currency === 'USD') {
-        const rate = await dolarService.getOficialRate();
+        const rate = await dolarService.getMepRate();
         if (!rate) throw new Error('Error cotización');
         usdAmount = Number(amount);
         usdRate = rate;
@@ -44,6 +41,7 @@ export function useAddTransaction() {
       const rows = [];
       for (let i = 0; i < installment_total; i++) {
         const monthIdx = (start_month - 1) + i;
+        if (monthIdx < 0) continue;
         if (monthIdx >= 12) break;
         const txDate = `${year}-${String(monthIdx + 1).padStart(2, '0')}-15`;
         rows.push({
@@ -62,9 +60,6 @@ export function useAddTransaction() {
           installment_group_id: groupId,
           usd_amount: usdAmount,
           usd_rate: usdRate,
-          ticket_items: i === 0 ? ticket_items : null,
-          ticket_image_url: i === 0 ? ticket_image_url : null,
-          ticket_total: i === 0 ? ticket_total : null,
           source: isManual ? 'manual' : 'imported',
         });
       }

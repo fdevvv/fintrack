@@ -24,9 +24,9 @@ export const profileService = {
     if (!session?.user) throw new Error('No auth');
     const ext = file.name.split('.').pop();
     const path = `${session.user.id}/avatar.${ext}`;
-    const { data, error } = await supabase.storage.from('tickets').upload(path, file, { contentType: file.type, upsert: true });
+    const { data, error } = await supabase.storage.from('avatars').upload(path, file, { contentType: file.type, upsert: true });
     if (error) throw error;
-    const { data: { publicUrl } } = supabase.storage.from('tickets').getPublicUrl(data.path);
+    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(data.path);
     return publicUrl;
   },
 };

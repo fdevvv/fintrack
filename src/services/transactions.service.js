@@ -38,6 +38,8 @@ export const transactionsService = {
   },
 
   async delete(id) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) throw new Error('No authenticated user');
     const { error } = await supabase
       .from('transactions')
       .update({ deleted_at: new Date().toISOString() })
@@ -49,6 +51,8 @@ export const transactionsService = {
    * Delete all installments in a group (soft delete).
    */
   async deleteGroup(groupId) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) throw new Error('No authenticated user');
     const { error } = await supabase
       .from('transactions')
       .update({ deleted_at: new Date().toISOString() })

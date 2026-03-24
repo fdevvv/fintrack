@@ -5,6 +5,8 @@ import { yearsService } from '@/services/years.service';
 import { categoriesService } from '@/services/categories.service';
 import { profileService } from '@/services/profile.service';
 import { budgetsService } from '@/services/budgets.service';
+import { monthlyBalanceService } from '@/services/monthlyBalance.service';
+import { sectionsService } from '@/services/sections.service';
 import { useUiStore } from '@/stores/uiStore';
 
 export const useStore = create((set, get) => ({
@@ -18,6 +20,8 @@ export const useStore = create((set, get) => ({
   income: new Array(12).fill(0),
   profile: null,
   budgets: {},
+  monthlyBalance: [],
+  userSections: [],
 
   // Navigation
   setPage: (page) => set({ page }),
@@ -45,27 +49,37 @@ export const useStore = create((set, get) => ({
       }
 
       const activeYear = get().year;
-      const currentMonth = new Date().getMonth() + 1;
+      const storeMonth = get().month;
+      const activeMonth = storeMonth >= 0 ? storeMonth + 1 : new Date().getMonth() + 1;
       const [txs, cats, inc, prof, budgetRows] = await Promise.all([
         transactionsService.list(activeYear),
         categoriesService.list(),
         incomeService.list(activeYear),
         profileService.get(),
-        budgetsService.list(activeYear, currentMonth),
+        budgetsService.list(activeYear, activeMonth),
       ]);
       const budgets = {};
       budgetRows.forEach(b => {
         const name = b.categories?.name;
         if (name) budgets[name] = b.limit_cents;
       });
-      set({
-        transactions: txs,
-        categories: cats,
-        income: inc,
-        profile: prof,
-        years: yrs,
-        budgets,
-      });
+      set({ transactions: txs, categories: cats, income: inc, profile: prof, years: yrs, budgets });
+
+      // Carga separada — no bloquea si la view aún no fue aplicada en Supabase
+      try {
+        const balanceRows = await monthlyBalanceService.list(activeYear);
+        console.log('[monthly_balance] rows:', balanceRows);
+        set({ monthlyBalance: balanceRows });
+      } catch (balanceErr) {
+        console.error('[monthly_balance] error:', balanceErr);
+      }
+
+      try {
+        const sectionRows = await sectionsService.list();
+        set({ userSections: sectionRows });
+      } catch (secErr) {
+        console.error('[user_sections] error:', secErr);
+      }
       useUiStore.getState().setSyncing(false);
     } catch (err) {
       console.error('loadAll error:', err);
@@ -102,8 +116,8 @@ export const useStore = create((set, get) => ({
 
   // Budgets (Supabase)
   setBudget: async (rubroName, limitCents) => {
-    const { year, categories, budgets } = get();
-    const month = new Date().getMonth() + 1;
+    const { year, month: storeMonth, categories, budgets } = get();
+    const month = storeMonth >= 0 ? storeMonth + 1 : new Date().getMonth() + 1;
     const cat = categories.find(c => c.name === rubroName && c.type === 'expense');
 
     // Optimistic update
@@ -118,6 +132,21 @@ export const useStore = create((set, get) => ({
     } else {
       await budgetsService.deleteByCategory(cat.id, year, month);
     }
+  },
+
+  // Sections
+  addSection: async (key, label) => {
+    const sec = await sectionsService.create(key, label);
+    set(s => ({ userSections: [...s.userSections, sec] }));
+    return sec;
+  },
+  updateSection: async (key, newLabel) => {
+    await sectionsService.update(key, newLabel);
+    set(s => ({ userSections: s.userSections.map(sec => sec.key === key ? { ...sec, label: newLabel } : sec) }));
+  },
+  removeSection: async (key) => {
+    await sectionsService.remove(key);
+    set(s => ({ userSections: s.userSections.filter(sec => sec.key !== key) }));
   },
 
   // Profile

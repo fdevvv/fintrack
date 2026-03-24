@@ -1,11 +1,7 @@
 -- ============================================================
--- Migration 005: Ticket OCR + Gastos del Mes + Rubro management
+-- Migration 005: Gastos del Mes + Rubro management
+-- (ticket_items, ticket_image_url, ticket_total removed in 009)
 -- ============================================================
-
--- Add ticket data to transactions
-ALTER TABLE transactions ADD COLUMN IF NOT EXISTS ticket_items JSONB;
-ALTER TABLE transactions ADD COLUMN IF NOT EXISTS ticket_image_url TEXT;
-ALTER TABLE transactions ADD COLUMN IF NOT EXISTS ticket_total BIGINT;
 
 -- Index for "gastos del mes" queries (payment method filtering)
 CREATE INDEX IF NOT EXISTS idx_tx_payment_method ON transactions(user_id, payment_method, transaction_date DESC)

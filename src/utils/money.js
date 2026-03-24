@@ -22,25 +22,3 @@ export const Mn = {
   },
 };
 
-/**
- * Convert display amount to integer cents (for DB storage).
- * $150.50 → 15050
- */
-export function toCents(displayAmount) {
-  if (!displayAmount) return 0;
-  const str = String(displayAmount).replace(/[^0-9.\-,]/g, '').replace(',', '.');
-  const parts = str.split('.');
-  const whole = parseInt(parts[0] || '0', 10);
-  const fraction = (parts[1] || '00').padEnd(2, '0').slice(0, 2);
-  return whole * 100 + parseInt(fraction, 10) * (whole < 0 ? -1 : 1);
-}
-
-/**
- * Convert cents to display string.
- */
-export function fromCents(cents, currency = 'ARS') {
-  const sym = currency === 'USD' ? 'US$' : '$';
-  const amount = Math.abs(cents) / 100;
-  const sign = cents < 0 ? '-' : '';
-  return sign + sym + ' ' + amount.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}

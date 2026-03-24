@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)",
+      "Bash(find /c/Users/inbax/OneDrive/Escritorio/fintrack -type f \\\\\\(-name *detail* -o -name *panel* -o -name *modal* \\\\\\))"
+    ]
+  }
+}

@@ -67,8 +67,9 @@ const NAVS = [
   { id:'dolar', icon:'$', label:'Dólar' },
   { id:'cfg', icon:'⚙', label:'Config' },
 ];
+const ADMIN_NAV = { id:'admin', icon:'👑', label:'Usuarios' };
 
-export function Sidebar({ active, onNav, year, years, setYear, onSignOut }) {
+export function Sidebar({ active, onNav, year, years, setYear, onSignOut, isAdmin }) {
   const [showLogout, setShowLogout] = useState(false);
   const yBS = { width:28,height:28,borderRadius:6,border:'1px solid rgba(255,255,255,0.08)',background:'rgba(255,255,255,0.04)',color:'#e8e8f0',fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center' };
 
@@ -91,7 +92,7 @@ export function Sidebar({ active, onNav, year, years, setYear, onSignOut }) {
 
       {/* Nav items */}
       <nav style={{ flex:1,padding:'0 10px' }}>
-        {NAVS.map(n => (
+        {[...NAVS, ...(isAdmin ? [ADMIN_NAV] : [])].map(n => (
           <button key={n.id} onClick={() => onNav(n.id)} style={{
             width:'100%',display:'flex',alignItems:'center',gap:10,padding:'10px 12px',
             borderRadius:10,border:'none',marginBottom:2,
@@ -242,10 +243,10 @@ export function TopBar({ year, years, setYear, syncing, onSignOut }) {
   );
 }
 
-export function MobileNav({ active, onNav }) {
+export function MobileNav({ active, onNav, isAdmin }) {
   return (
     <nav className="ft-mobile-nav" style={{ position:'fixed',bottom:0,left:0,right:0,background:'rgba(12,12,20,0.95)',backdropFilter:'blur(20px)',borderTop:'1px solid rgba(255,255,255,0.05)',justifyContent:'space-around',padding:'6px 0 env(safe-area-inset-bottom, 8px)',zIndex:100 }}>
-      {NAVS.map(n => (
+      {[...NAVS, ...(isAdmin ? [ADMIN_NAV] : [])].map(n => (
         <button key={n.id} onClick={() => onNav(n.id)} style={{ background:'none',border:'none',color:active===n.id?'#7c6cf0':'#5c5c72',display:'flex',flexDirection:'column',alignItems:'center',gap:2,fontSize:9,fontWeight:600,cursor:'pointer',padding:'6px 8px' }}>
           <span style={{ fontSize:18,lineHeight:1 }}>{n.icon}</span>
           <span>{n.label}</span>

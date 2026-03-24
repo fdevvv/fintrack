@@ -10,7 +10,7 @@ import { useDeleteTransaction } from '@/hooks/transactions/useDeleteTransaction'
 import { ST, MonthBar, ItemIcon, Pnl, ConfirmModal } from '@/components/ui/Shared';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 
-const METHODS = { cash:'Efectivo', transfer:'Transferencia', qr_debit:'QR Débito', debit_card:'Débito' };
+const METHODS = { cash:'Efectivo', transfer:'Transferencia', qr_debit:'QR', debit_card:'Débito' };
 
 export function GastosPage() {
   const { income, year } = useStore();
@@ -24,6 +24,9 @@ export function GastosPage() {
     filterMethod,
     sourceFilter: 'manual',
   });
+
+  // Total de todos los gastos del mes (igual que el panel) para calcular el disponible real
+  const { total: totalTodos } = useTransactions({ month: localMonth });
   const { remove } = useDeleteTransaction();
 
   const filtered = [...rawFiltered].sort((a, b) => new Date(b.transaction_date) - new Date(a.transaction_date));
@@ -56,22 +59,23 @@ export function GastosPage() {
       {/* Summary cards */}
       {(() => {
         const inc = income[localMonth >= 0 ? localMonth : new Date().getMonth()] || 0;
-        const rest = inc - total;
+        const disponible = inc - totalTodos;
+        const rest = disponible - total;
         const AmtCell = ({ label, value, color, sub }) => {
           const [expanded, setExpanded] = useState(false);
           return (
             <div style={cardStyle} onClick={() => setExpanded(!expanded)} title={Mn.fmt(value)}>
               <div style={{ fontSize:10,color:'#6c6c84',fontWeight:600,textTransform:'uppercase' }}>{label}</div>
-              <div style={{ fontSize:expanded?15:18,fontWeight:800,color,marginTop:2,cursor:'pointer',transition:'font-size .15s' }}>{value===0&&label==='Ingreso'?'—':expanded?Mn.fmt(value):Mn.short(value)}</div>
+              <div style={{ fontSize:expanded?15:18,fontWeight:800,color,marginTop:2,cursor:'pointer',transition:'font-size .15s' }}>{expanded?Mn.fmt(value):Mn.short(value)}</div>
               {sub && <div style={{ fontSize:9,color:'#5c5c72' }}>{sub}</div>}
             </div>
           );
         };
         return (
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8, marginBottom:14 }}>
-            <AmtCell label="Ingreso" value={inc} color="#2dd4a8" />
+            <AmtCell label="Disponible" value={disponible} color={disponible>=0?'#2dd4a8':'#f06070'} />
             <AmtCell label="Gastado" value={total} color="#f06070" sub={`${filtered.length} gastos`} />
-            <AmtCell label="Restante" value={rest} color={rest>=0?'#2dd4a8':'#f06070'} sub={rest>=0?'Disponible':'Déficit'} />
+            <AmtCell label="Restante" value={rest} color={rest>=0?'#2dd4a8':'#f06070'} sub={rest>=0?'Sobrante':'Déficit'} />
           </div>
         );
       })()}

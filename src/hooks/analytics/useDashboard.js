@@ -4,14 +4,23 @@ import { MONTHS, SECTIONS, RUBRO_EMOJI } from '@/utils/constants';
 import { Mn } from '@/utils/money';
 
 export function useDashboard() {
-  const { transactions, income, budgets } = useStore();
-  const mo = new Date().getMonth();
+  const { transactions, income, budgets, monthlyBalance } = useStore();
+  const mo = new Date().getMonth(); // 0-based, siempre el mes actual del calendario
 
+  // ── Gastos (local, para charts y presupuestos) ─────────────────────────────
   const expenses = useMemo(() =>
     transactions.filter(t => t.type === 'expense'),
     [transactions]
   );
 
+  // Totales por mes para gráficos (todos los gastos, manual + importado)
+  const monthlyTotals = useMemo(() => {
+    const t = new Array(12).fill(0);
+    expenses.forEach(tx => { t[new Date(tx.transaction_date).getMonth()] += tx.amount_cents; });
+    return t;
+  }, [expenses]);
+
+  // Gasto mensual por sección (tarjeta) — gráfico de barras del dashboard
   const sectionBarData = useMemo(() => {
     const subs = {};
     Object.keys(SECTIONS).forEach(k => { subs[k] = new Array(12).fill(0); });
@@ -27,41 +36,74 @@ export function useDashboard() {
     });
   }, [expenses]);
 
-  const monthlyTotals = useMemo(() => {
-    const t = new Array(12).fill(0);
-    expenses.forEach(tx => { t[new Date(tx.transaction_date).getMonth()] += tx.amount_cents; });
-    return t;
-  }, [expenses]);
-
+  // Distribución por rubro del mes actual — gráfico de torta
   const rubroData = useMemo(() => {
     const m = {};
-    expenses.forEach(tx => { const r = tx.categories?.name || 'Otros'; m[r] = (m[r] || 0) + tx.amount_cents; });
+    expenses
+      .filter(tx => new Date(tx.transaction_date).getMonth() === mo)
+      .forEach(tx => { const r = tx.categories?.name || 'Otros'; m[r] = (m[r] || 0) + tx.amount_cents; });
     return Object.entries(m).sort((a, b) => b[1] - a[1]).map(([name, total]) => ({ name, total }));
-  }, [expenses]);
+  }, [expenses, mo]);
 
+  // ── Balance (local, tiempo real) ───────────────────────────────────────────
+
+  // Ingreso neto del mes (del store, ya cargado desde monthly_income)
+  const ingresoNeto = income[mo] || 0;
+
+  // Gastos del mes (todos los tipos, tiempo real desde estado local)
+  const gastosDiarios = useMemo(() =>
+    transactions
+      .filter(t =>
+        t.type === 'expense' &&
+        new Date(t.transaction_date).getMonth() === mo
+      )
+      .reduce((s, t) => s + t.amount_cents, 0),
+    [transactions, mo]
+  );
+
+  // Restante = disponible actual − total gastado del mes
+  const restante = ingresoNeto - gastosDiarios;
+
+  // ── Alertas ────────────────────────────────────────────────────────────────
   const alerts = useMemo(() => {
     const al = [];
-    const g = monthlyTotals[mo] || 0, ing = income[mo] || 0;
-    if (ing > 0 && g > ing) al.push({ t: 'danger', m: `Superaste tu ingreso de ${MONTHS[mo]} por ${Mn.fmt(g - ing)}` });
-    else if (ing > 0 && g > ing * 0.8) al.push({ t: 'warning', m: `Vas ${Mn.pct(g, ing)} del ingreso de ${MONTHS[mo]}` });
-    if (ing > 0 && g > 0 && ing - g > 0) al.push({ t: 'info', m: `Podés destinar ${Mn.fmt(ing - g)} a ahorro o inversión` });
+
+    // Alertas de balance
+    if (restante < 0) {
+      al.push({ t: 'danger', m: `Déficit de ${Mn.fmt(Math.abs(restante))} en ${MONTHS[mo]}` });
+    } else if (ingresoNeto > 0 && gastosDiarios > ingresoNeto * 0.8) {
+      al.push({ t: 'warning', m: `Gastaste el ${Mn.pct(gastosDiarios, ingresoNeto)} del ingreso de ${MONTHS[mo]}` });
+    }
+
+    if (ingresoNeto > 0 && restante > 0) {
+      al.push({ t: 'info', m: `Podés destinar ${Mn.fmt(restante)} a ahorro o inversión` });
+    }
+
+    // Alertas de presupuesto por rubro
     if (budgets && Object.keys(budgets).length) {
       const rm = {};
-      expenses.filter(t => new Date(t.transaction_date).getMonth() === mo)
+      expenses
+        .filter(t => new Date(t.transaction_date).getMonth() === mo)
         .forEach(t => { const r = t.categories?.name || 'Otros'; rm[r] = (rm[r] || 0) + t.amount_cents; });
       Object.entries(budgets).forEach(([rubro, limit]) => {
         const spent = rm[rubro] || 0;
-        if (limit > 0 && spent > limit) al.push({ t: 'danger', m: `${RUBRO_EMOJI[rubro] || '📎'} ${rubro}: ${Mn.fmt(spent)} de ${Mn.fmt(limit)}` });
-        else if (limit > 0 && spent > limit * 0.8) al.push({ t: 'warning', m: `${RUBRO_EMOJI[rubro] || '📎'} ${rubro}: ${Mn.pct(spent, limit)} del presupuesto` });
+        if (limit > 0 && spent > limit) {
+          al.push({ t: 'danger', m: `${RUBRO_EMOJI[rubro] || '📎'} ${rubro}: ${Mn.fmt(spent)} de ${Mn.fmt(limit)}` });
+        } else if (limit > 0 && spent > limit * 0.8) {
+          al.push({ t: 'warning', m: `${RUBRO_EMOJI[rubro] || '📎'} ${rubro}: ${Mn.pct(spent, limit)} del presupuesto` });
+        }
       });
     }
-    return al;
-  }, [monthlyTotals, income, budgets, expenses, mo]);
 
+    return al;
+  }, [expenses, budgets, ingresoNeto, gastosDiarios, restante, mo]);
+
+  // ── Presupuestos ───────────────────────────────────────────────────────────
   const budgetEntries = useMemo(() => {
     if (!budgets || !Object.keys(budgets).length) return [];
     const rm = {};
-    expenses.filter(t => new Date(t.transaction_date).getMonth() === mo)
+    expenses
+      .filter(t => new Date(t.transaction_date).getMonth() === mo)
       .forEach(t => { const r = t.categories?.name || 'Otros'; rm[r] = (rm[r] || 0) + t.amount_cents; });
     return Object.entries(budgets).filter(([, v]) => v > 0).map(([rubro, limit]) => {
       const spent = rm[rubro] || 0;
@@ -69,25 +111,32 @@ export function useDashboard() {
     }).sort((a, b) => b.pct - a.pct);
   }, [expenses, budgets, mo]);
 
-  const totalExp = monthlyTotals[mo] || 0;
-  const ing = income[mo] || 0;
-  const rest = ing - totalExp;
-  const pct = ing > 0 ? ((totalExp / ing) * 100).toFixed(1) : 0;
-  const anual = monthlyTotals.reduce((a, b) => a + b, 0);
-  const rubroTotal = rubroData.reduce((s, r) => s + r.total, 0);
-
+  // ── Gráfico Ingreso vs Gasto ───────────────────────────────────────────────
   const incomeVsExpenseData = MONTHS.map((m, i) => ({
     name: m,
     Ingreso: income[i] || 0,
     Gasto: monthlyTotals[i] || 0,
   }));
 
+  // ── Cards del dashboard ────────────────────────────────────────────────────
   const cards = [
-    { l: `Ingreso ${MONTHS[mo]}`, v: ing > 0 ? Mn.short(ing) : '—', f: Mn.fmt(ing), c: '#2dd4a8', s: 'Neto mensual' },
-    { l: `Gasto ${MONTHS[mo]}`, v: Mn.short(totalExp), f: Mn.fmt(totalExp), c: '#f06070', s: `${pct}% del ingreso` },
-    { l: 'Restante', v: Mn.short(rest), f: Mn.fmt(rest), c: rest >= 0 ? '#2dd4a8' : '#f06070', s: rest >= 0 ? 'Disponible' : '⚠️ Déficit' },
-    { l: 'Total Anual', v: Mn.short(anual), f: Mn.fmt(anual), c: '#7c6cf0', s: 'Acumulado' },
+    {
+      l: `Disponible ${MONTHS[mo]}`,
+      v: ingresoNeto > 0 ? Mn.short(ingresoNeto) : '—',
+      f: Mn.fmt(ingresoNeto),
+      c: '#2dd4a8',
+      s: 'Neto mensual',
+    },
+    {
+      l: 'Restante',
+      v: Mn.short(restante),
+      f: Mn.fmt(restante),
+      c: restante >= 0 ? '#2dd4a8' : '#f06070',
+      s: gastosDiarios > 0 ? `− ${Mn.short(gastosDiarios)} gastado` : 'Sin gastos este mes',
+    },
   ];
+
+  const rubroTotal = rubroData.reduce((s, r) => s + r.total, 0);
 
   return {
     mo,
@@ -97,11 +146,9 @@ export function useDashboard() {
     rubroTotal,
     alerts,
     budgetEntries,
-    totalExp,
-    ing,
-    rest,
-    pct,
-    anual,
+    ingresoNeto,
+    gastosDiarios,
+    restante,
     incomeVsExpenseData,
     cards,
   };

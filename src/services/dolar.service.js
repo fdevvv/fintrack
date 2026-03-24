@@ -13,4 +13,11 @@ export const dolarService = {
     const oficial = data.find(x => x.nombre === 'Oficial');
     return oficial?.venta || 0;
   },
+
+  async getMepRate() {
+    const data = await this.fetchAll();
+    const mep = data.find(x => x.nombre === 'Bolsa' || x.nombre === 'MEP');
+    const oficial = data.find(x => x.nombre === 'Oficial');
+    return mep?.venta || oficial?.venta || 0;
+  },
 };

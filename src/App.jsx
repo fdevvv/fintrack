@@ -12,10 +12,11 @@ import { ImportPage } from './pages/ImportPage';
 import { GastosPage } from './pages/GastosPage';
 import { DolarPage } from './pages/DolarPage';
 import { ConfigPage } from './pages/ConfigPage';
+import { AdminPage } from './pages/AdminPage';
 
 export default function App() {
   const { session, authLoading, signOut } = useAuth();
-  const { page, setPage, year, years, setYear, loadAll } = useStore();
+  const { page, setPage, year, years, setYear, loadAll, profile } = useStore();
   const { syncing, toast, clearToast } = useUiStore();
 
   useEffect(() => {
@@ -44,6 +45,7 @@ export default function App() {
       case 'imp': return <ImportPage />;
       case 'dolar': return <DolarPage />;
       case 'cfg': return <ConfigPage />;
+      case 'admin': return <AdminPage />;
       default: return <DashPage />;
     }
   };
@@ -79,7 +81,7 @@ export default function App() {
       `}</style>
 
       <div className="ft-app">
-        <Sidebar active={page} onNav={setPage} year={year} years={years} setYear={setYear} onSignOut={signOut} />
+        <Sidebar active={page} onNav={setPage} year={year} years={years} setYear={setYear} onSignOut={signOut} isAdmin={profile?.email === 'foschi246@gmail.com'} />
 
         <div className="ft-main">
           {/* Mobile header */}
@@ -89,7 +91,7 @@ export default function App() {
           </div>
         </div>
 
-        <MobileNav active={page} onNav={setPage} />
+        <MobileNav active={page} onNav={setPage} isAdmin={profile?.email === 'foschi246@gmail.com'} />
         <Toast toast={toast} onClear={clearToast} />
       </div>
     </>
