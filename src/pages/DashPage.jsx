@@ -3,6 +3,9 @@ import { SECTIONS, COLORS, MONTHS, RUBRO_EMOJI } from '@/utils/constants';
 import { Mn } from '@/utils/money';
 import { cardStyle, tooltipStyle, tooltipLabel, tooltipItem, tooltipWrapper, tooltipCursor } from '@/utils/styles';
 import { useDashboard } from '@/hooks/analytics/useDashboard';
+import { useMonthComparison } from '@/hooks/analytics/useMonthComparison';
+import { useMonthlyIncome } from '@/hooks/income/useMonthlyIncome';
+import { MonthlyIncomeHistory } from '@/components/income/MonthlyIncomeHistory';
 import { Pnl } from '@/components/ui/Shared';
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
@@ -14,7 +17,35 @@ export function DashPage() {
     mo, sectionBarData, rubroData, rubroTotal,
     alerts, budgetEntries, incomeVsExpenseData, cards,
   } = useDashboard();
+  const { data: cmp, loading: cmpLoading } = useMonthComparison();
   const ttS = tooltipStyle;
+
+  // Monthly income editor
+  const now      = new Date();
+  const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const { income: incomeValue, loading: incLoading, updateIncome } = useMonthlyIncome(monthKey);
+  const [isEditing, setIsEditing] = useState(false);
+  const [inputVal,  setInputVal]  = useState('');
+
+  const fmtMoney = n => {
+    const safe = isFinite(n) && !isNaN(n) ? Math.max(0, n) : 0;
+    return '$' + safe.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+  const startEdit  = () => { setInputVal(String(incomeValue || '')); setIsEditing(true); };
+  const cancelEdit = () => setIsEditing(false);
+  const handleSave = async () => {
+    const n = Number(inputVal);
+    if (!isFinite(n) || isNaN(n) || n < 0) return;
+    await updateIncome(n);
+    setIsEditing(false);
+  };
+  const handleKey = e => {
+    if (e.key === 'Enter')  handleSave();
+    if (e.key === 'Escape') cancelEdit();
+  };
+
+  const varColor = v => v > 0 ? '#2dd4a8' : v < 0 ? '#f06070' : '#6c6c84';
+  const varLabel = v => v === 0 ? '—' : (v > 0 ? '+' : '') + v + '%';
 
   function DashCard({ card: c }) {
     const [exp, setExp] = useState(false);
@@ -42,6 +73,95 @@ export function DashPage() {
       <div className="dash-cards">
         {cards.map((c,i) => <DashCard key={i} card={c} />)}
       </div>
+
+      {/* Monthly income editor */}
+      <Pnl title={`Ingreso ${MONTHS[mo]}`}>
+        {incLoading && !isEditing ? (
+          <div className="flex items-center justify-between">
+            <div className="h-8 w-40 rounded-lg bg-white/5 animate-pulse" />
+            <div className="h-8 w-9 rounded-lg bg-white/[0.03] animate-pulse" />
+          </div>
+        ) : isEditing ? (
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              value={inputVal}
+              onChange={e => setInputVal(e.target.value)}
+              onKeyDown={handleKey}
+              autoFocus
+              min="0"
+              step="1"
+              placeholder="0"
+              className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-lg font-bold text-[#e8e8f0] outline-none focus:border-[#7c6cf0] transition-colors"
+            />
+            <button
+              onClick={handleSave}
+              disabled={incLoading}
+              className="px-4 py-2 rounded-lg text-sm font-bold bg-[#2dd4a8] text-[#0a0a12] disabled:opacity-50 cursor-pointer transition-opacity"
+            >
+              {incLoading ? '…' : '✓'}
+            </button>
+            <button
+              onClick={cancelEdit}
+              className="px-3 py-2 rounded-lg text-sm bg-white/5 text-[#6c6c84] cursor-pointer hover:text-[#e8e8f0] transition-colors"
+            >
+              ✕
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between">
+            <span className="text-2xl font-extrabold text-[#2dd4a8] tracking-tight">
+              {fmtMoney(incomeValue)}
+            </span>
+            <button
+              onClick={startEdit}
+              className="px-3 py-1.5 rounded-lg border border-white/10 bg-white/[0.04] text-[#6c6c84] text-sm cursor-pointer hover:text-[#e8e8f0] transition-colors"
+              title="Editar ingreso mensual"
+            >
+              ✏️
+            </button>
+          </div>
+        )}
+      </Pnl>
+
+      {/* Monthly net income history */}
+      <MonthlyIncomeHistory />
+
+      {/* Month comparison */}
+      <Pnl title={`Comparación vs ${MONTHS[mo === 0 ? 11 : mo - 1]}`}>
+        <style>{`.cmp-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}`}</style>
+        <div className="cmp-grid">
+          {[
+            { label: 'Ingresos',  key: 'income'   },
+            { label: 'Gastos',    key: 'expenses' },
+            { label: 'Balance',   key: 'balance'  },
+          ].map(({ label, key }) => {
+            const val = cmp?.current?.[key]  ?? 0;
+            const vrn = cmp?.variation?.[key] ?? 0;
+            return (
+              <div key={key} style={{ background:'rgba(255,255,255,0.03)',borderRadius:10,padding:'10px 12px' }}>
+                <div style={{ fontSize:10,color:'#6c6c84',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:4 }}>
+                  {label}
+                </div>
+                {cmpLoading ? (
+                  <div style={{ height:20,borderRadius:6,background:'rgba(255,255,255,0.06)',marginBottom:4 }} />
+                ) : (
+                  <div style={{ fontSize:15,fontWeight:800,color:'#e8e8f0',marginBottom:2 }}>
+                    {Mn.fmt(val)}
+                  </div>
+                )}
+                {cmpLoading ? (
+                  <div style={{ height:12,width:'50%',borderRadius:4,background:'rgba(255,255,255,0.04)' }} />
+                ) : (
+                  <div style={{ fontSize:11,fontWeight:600,color:varColor(vrn) }}>
+                    {varLabel(vrn)}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </Pnl>
 
       {/* Alerts */}
       {alerts.map((a,i) => (

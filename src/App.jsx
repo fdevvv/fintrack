@@ -14,6 +14,7 @@ import { GastosPage } from './pages/GastosPage';
 import { DolarPage } from './pages/DolarPage';
 import { ConfigPage } from './pages/ConfigPage';
 import { AdminPage } from './pages/AdminPage';
+import { MesDetailPage } from './pages/MesDetailPage';
 
 const PAGE_ROUTES = {
   dash:   '/panel',
@@ -36,6 +37,7 @@ export default function App() {
 
   // URL → estado al cargar o usar back/forward
   useEffect(() => {
+    if (/^\/mes\/\d{4}-\d{2}$/.test(location.pathname)) return; // detail page, no cambia la tab activa
     const p = ROUTE_PAGES[location.pathname] || 'dash';
     if (p !== page) setPage(p);
   }, [location.pathname]);
@@ -64,6 +66,8 @@ export default function App() {
   if (!session) return <AuthPage />;
 
   const renderPage = () => {
+    const mesMatch = location.pathname.match(/^\/mes\/(\d{4}-\d{2})$/);
+    if (mesMatch) return <MesDetailPage month={mesMatch[1]} />;
     switch (page) {
       case 'dash': return <DashPage />;
       case 'add': return <AddPage />;

@@ -2,7 +2,17 @@ node_modules/
 dist/
 .env
 .env.local
+.env.*.local
 .netlify/
 *.log
 .DS_Store
 coverage/
+
+# Claude Code (sesión local, no va al repo)
+.claude/
+
+# Vite cache
+node_modules/.vite/
+
+# Carpetas accidentales
+{src
