@@ -6,6 +6,17 @@
  */
 export const UPDATES = [
   {
+    id: 'update-20260331-1',
+    date: '31 de marzo de 2026 · 14:06 (ARG)',
+    title: 'Mejoras en ingreso neto, formulario y correcciones en iPhone',
+    items: [
+      'El ingreso neto mensual ahora solo muestra los meses que cargaste, sin meses vacíos.',
+      'Podés eliminar un registro de ingreso mensual si ya no lo necesitás.',
+      'El selector "Gasto del día / Tarjeta" en Agregar tiene un diseño más limpio y sin colores repetidos.',
+      'Se corrigió el zoom automático que aparecía al tocar cualquier campo de texto en iPhone.',
+    ],
+  },
+  {
     id: 'update-20260330-1',
     date: '30 de marzo de 2026 · 23:30 (ARG)',
     title: 'Grandes mejoras en importación, detalle y configuración',

@@ -70,7 +70,7 @@ export function ListPage() {
     <div style={{ padding:'0 16px',maxWidth:800,margin:'0 auto' }}>
       <ST color="#7c6cf0">Detalle de Gastos</ST>
       <div style={{ position:'relative',marginBottom:10,maxWidth:500 }}>
-        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Buscar gasto..." style={{ width:'100%',padding:'11px 14px',fontSize:13,borderRadius:10,border:'1px solid rgba(255,255,255,0.08)',background:'rgba(255,255,255,0.04)',color:'#e8e8f0',outline:'none',boxSizing:'border-box' }} />
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Buscar gasto..." style={{ width:'100%',padding:'11px 14px',fontSize:16,borderRadius:10,border:'1px solid rgba(255,255,255,0.08)',background:'rgba(255,255,255,0.04)',color:'#e8e8f0',outline:'none',boxSizing:'border-box' }} />
         {search && <button onClick={()=>setSearch('')} style={{ position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',color:'#5c5c72',fontSize:16,cursor:'pointer' }}>✕</button>}
       </div>
 
@@ -108,7 +108,7 @@ export function ListPage() {
                         onChange={e=>setEditingName(e.target.value.toUpperCase())}
                         onKeyDown={e=>{if(e.key==='Enter')commitRename();if(e.key==='Escape')setEditingGroupId(null);}}
                         onBlur={commitRename}
-                        style={{width:'100%',background:'rgba(255,255,255,0.08)',border:'1px solid rgba(124,108,240,0.5)',borderRadius:6,padding:'3px 8px',fontSize:14,fontWeight:600,color:'#e8e8f0',outline:'none',boxSizing:'border-box'}}
+                        style={{width:'100%',background:'rgba(255,255,255,0.08)',border:'1px solid rgba(124,108,240,0.5)',borderRadius:6,padding:'3px 8px',fontSize:16,fontWeight:600,color:'#e8e8f0',outline:'none',boxSizing:'border-box'}}
                       />
                     ) : (
                       <div style={{ fontSize:14,fontWeight:600,color:'#e8e8f0',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis' }}>{g.item_name||g.description}</div>

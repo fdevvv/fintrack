@@ -114,7 +114,7 @@ export function ImportPage() {
                     onKeyDown={e=>{if(e.key==='Enter'){updateNombre(i,editingName);setEditingIdx(null);}if(e.key==='Escape')setEditingIdx(null);}}
                     onBlur={()=>{updateNombre(i,editingName);setEditingIdx(null);}}
                     onClick={e=>e.stopPropagation()}
-                    style={{width:'100%',background:'rgba(255,255,255,0.08)',border:'1px solid rgba(96,168,240,0.4)',borderRadius:6,padding:'3px 7px',fontSize:13,fontWeight:600,color:'#e8e8f0',outline:'none',boxSizing:'border-box'}}
+                    style={{width:'100%',background:'rgba(255,255,255,0.08)',border:'1px solid rgba(96,168,240,0.4)',borderRadius:6,padding:'3px 7px',fontSize:16,fontWeight:600,color:'#e8e8f0',outline:'none',boxSizing:'border-box'}}
                   />
                 ) : (
                   <div style={{fontSize:13,fontWeight:600,color:'#e8e8f0',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{g.nombre}</div>
@@ -129,7 +129,7 @@ export function ImportPage() {
               value={g.rubro}
               onChange={e=>{e.stopPropagation();updateRubro(i,e.target.value);}}
               onClick={e=>e.stopPropagation()}
-              style={{background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.08)',borderRadius:7,color:'#a0a0b8',fontSize:10,fontWeight:600,padding:'4px 6px',cursor:'pointer',flexShrink:0,maxWidth:110,outline:'none'}}
+              style={{background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.08)',borderRadius:7,color:'#a0a0b8',fontSize:16,fontWeight:600,padding:'4px 6px',cursor:'pointer',flexShrink:0,maxWidth:110,outline:'none'}}
             >
               {expCats.map(c=><option key={c.id} value={c.name}>{c.icon||RUBRO_EMOJI[c.name]||'📎'} {c.name}</option>)}
             </select>

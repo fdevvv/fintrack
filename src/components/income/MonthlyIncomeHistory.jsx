@@ -40,40 +40,30 @@ function SkeletonRows({ count = 6 }) {
 const INLINE_INPUT = {
   width: 110, background: 'rgba(255,255,255,0.05)',
   border: '1px solid rgba(124,108,240,0.4)', borderRadius: 8,
-  padding: '4px 8px', fontSize: 13, fontWeight: 600, color: '#e8e8f0', outline: 'none',
+  padding: '4px 8px', fontSize: 16, fontWeight: 600, color: '#e8e8f0', outline: 'none',
 };
-const BTN_SAVE   = { background: '#2dd4a8', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 12, fontWeight: 700, color: '#0a0a12', cursor: 'pointer' };
+const BTN_SAVE   = { background: '#22c55e', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 12, fontWeight: 700, color: '#0a0a12', cursor: 'pointer' };
 const BTN_CANCEL = { background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: 6, padding: '4px 8px', fontSize: 12, color: '#6c6c84', cursor: 'pointer' };
 
 export function MonthlyIncomeHistory() {
   const navigate = useNavigate();
-  const { rows, loading, updateRow } = useMonthlyIncomeHistory();
+  const { rows, loading, updateRow, deleteRow } = useMonthlyIncomeHistory();
   const { session } = useAuth();
   const userId = session?.user?.id ?? null;
+
+  const [deletingMonth, setDeletingMonth] = useState(null);
 
   const currentMonthKey = useMemo(() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   }, []);
 
-  // Próximos 6 meses que aún no tienen registro
-  const upcomingKeys = useMemo(() => {
-    const keys = [];
-    const now = new Date();
-    for (let i = 1; i <= 6; i++) {
-      const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-      keys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
-    }
-    return keys.filter(k => !rows.some(r => r.month === k));
-  }, [rows]);
-
   const [editingMonth, setEditingMonth] = useState(null);
   const [inputVal,     setInputVal]     = useState('');
   const [saving,       setSaving]       = useState(false);
 
-  const startEdit   = useCallback((row)   => { setEditingMonth(row.month); setInputVal(String(row.amount || '')); }, []);
-  const startAdd    = useCallback((month) => { setEditingMonth(month);     setInputVal(''); }, []);
-  const cancelEdit  = useCallback(() => setEditingMonth(null), []);
+  const startEdit  = useCallback((row) => { setEditingMonth(row.month); setInputVal(String(row.amount || '')); }, []);
+  const cancelEdit = useCallback(() => setEditingMonth(null), []);
 
   const handleSave = useCallback(async (month) => {
     const n = Number(inputVal);
@@ -91,6 +81,15 @@ export function MonthlyIncomeHistory() {
     if (e.key === 'Enter')  handleSave(month);
     if (e.key === 'Escape') cancelEdit();
   }, [handleSave, cancelEdit]);
+
+  const handleDelete = useCallback(async (month) => {
+    setDeletingMonth(month);
+    try {
+      await monthlyIncomeService.deleteMonthlyIncome(userId, month);
+      deleteRow(month);
+    } catch { /* sin cambio visual */ }
+    finally { setDeletingMonth(null); }
+  }, [userId, deleteRow]);
 
   const renderEditControls = (month) => (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, justifyContent: 'flex-end' }}>
@@ -114,11 +113,10 @@ export function MonthlyIncomeHistory() {
         <SkeletonRows />
       ) : (
         <>
-          {rows.length === 0 && upcomingKeys.length === 0 && (
+          {rows.length === 0 && (
             <p style={{ fontSize: 12, color: '#3c3c54', margin: 0 }}>Sin datos disponibles.</p>
           )}
 
-          {/* Meses con datos */}
           {rows.map((row, i) => {
             const isCurrent = row.month === currentMonthKey;
             const isEditing = editingMonth === row.month;
@@ -138,31 +136,13 @@ export function MonthlyIncomeHistory() {
                       {Mn.fmt(row.amount)}
                     </span>
                     <button onClick={() => startEdit(row)} data-testid={`edit-${row.month}`} style={{ background: 'none', border: 'none', color: '#3c3c54', fontSize: 13, cursor: 'pointer', padding: '2px 4px' }} title="Editar">✏️</button>
+                    <button onClick={() => handleDelete(row.month)} disabled={deletingMonth === row.month} data-testid={`delete-${row.month}`} style={{ background: 'none', border: 'none', color: '#3c3c54', fontSize: 13, cursor: 'pointer', padding: '2px 4px', opacity: deletingMonth === row.month ? 0.4 : 1 }} title="Eliminar">🗑</button>
                   </div>
                 )}
               </div>
             );
           })}
 
-          {/* Próximos meses sin registro */}
-          {upcomingKeys.length > 0 && (
-            <div style={{ marginTop: rows.length > 0 ? 6 : 0 }}>
-              {upcomingKeys.map(month => (
-                <div key={month} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                  <span
-                    onClick={() => navigate(`/mes/${month}`)}
-                    style={{ fontSize: 13, color: '#5c5c72', minWidth: 72, cursor: 'pointer' }}
-                    title="Ver detalle del mes"
-                  >{fmtMonthKey(month)}</span>
-                  {editingMonth === month ? renderEditControls(month) : (
-                    <button onClick={() => startAdd(month)} data-testid={`add-${month}`} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, padding: '3px 10px', fontSize: 11, color: '#5c5c72', cursor: 'pointer' }}>
-                      + Agregar
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
         </>
       )}
     </Pnl>

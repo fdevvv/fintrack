@@ -66,7 +66,7 @@ export function ConfigPage() {
       return (
         <div key={cat.id} style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
           <EmojiPicker value={editIcon} onChange={setEditIcon} />
-          <input value={editName} onChange={e => setEditName(e.target.value)} style={{ ...inputStyle, flex: 1, padding: '6px 10px', fontSize: 13 }} />
+          <input value={editName} onChange={e => setEditName(e.target.value)} style={{ ...inputStyle, flex: 1, padding: '6px 10px', fontSize: 16 }} />
           <button onClick={saveEdit} style={{ background: '#2dd4a8', border: 'none', color: '#0a0a12', fontSize: 11, fontWeight: 700, padding: '6px 12px', borderRadius: 6, cursor: 'pointer' }}>✓</button>
           <button onClick={() => setEditId(null)} style={{ background: 'none', border: 'none', color: '#5c5c72', fontSize: 14, cursor: 'pointer' }}>✕</button>
         </div>
@@ -135,7 +135,7 @@ export function ConfigPage() {
             {editSecKey === s.key ? (
               <>
                 <input value={editSecLabel} onChange={e => setEditSecLabel(e.target.value)} onKeyDown={e => e.key==='Enter' && handleUpdateSection()} autoFocus
-                  style={{ ...inputStyle, flex:1, padding:'6px 10px', fontSize:13 }} />
+                  style={{ ...inputStyle, flex:1, padding:'6px 10px', fontSize:16 }} />
                 <button onClick={handleUpdateSection} style={{ background:'#7c6cf0', border:'none', color:'#fff', fontSize:11, fontWeight:700, padding:'6px 12px', borderRadius:6, cursor:'pointer' }}>✓</button>
                 <button onClick={() => setEditSecKey(null)} style={{ background:'none', border:'none', color:'#5c5c72', fontSize:14, cursor:'pointer' }}>✕</button>
               </>

@@ -97,6 +97,27 @@ export const monthlyIncomeService = {
   },
 
   /**
+   * Deletes the income record for a specific month.
+   *
+   * @param {string} userId
+   * @param {string} month - Format "YYYY-MM"
+   */
+  async deleteMonthlyIncome(userId, month) {
+    const parsed = parseYYYYMM(month);
+    if (!parsed) throw new Error(`Invalid month format: "${month}". Expected "YYYY-MM".`);
+
+    const { error } = await supabase
+      .from('monthly_income')
+      .delete()
+      .eq('user_id', userId)
+      .eq('year', parsed.year)
+      .eq('month', parsed.month)
+      .eq('currency', 'ARS');
+
+    if (error) throw error;
+  },
+
+  /**
    * Returns income for the last 12 months sorted ascending.
    * Months with no record are included with amount: 0.
    *

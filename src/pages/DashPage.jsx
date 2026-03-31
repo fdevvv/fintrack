@@ -97,7 +97,7 @@ export function DashPage() {
             <button
               onClick={handleSave}
               disabled={incLoading}
-              className="px-4 py-2 rounded-lg text-sm font-bold bg-[#2dd4a8] text-[#0a0a12] disabled:opacity-50 cursor-pointer transition-opacity"
+              className="px-4 py-2 rounded-lg text-sm font-bold bg-[#22c55e] text-[#0a0a12] disabled:opacity-50 cursor-pointer transition-opacity"
             >
               {incLoading ? '…' : '✓'}
             </button>

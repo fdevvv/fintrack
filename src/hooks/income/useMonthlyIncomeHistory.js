@@ -40,5 +40,9 @@ export function useMonthlyIncomeHistory() {
     });
   }, []);
 
-  return { rows, loading, error, updateRow };
+  const deleteRow = useCallback((month) => {
+    setRows(prev => prev.filter(r => r.month !== month));
+  }, []);
+
+  return { rows, loading, error, updateRow, deleteRow };
 }

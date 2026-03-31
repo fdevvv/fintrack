@@ -19,6 +19,10 @@ export const profileService = {
     return data;
   },
 
+  async touch() {
+    await supabase.rpc('update_last_seen');
+  },
+
   async uploadAvatar(file) {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) throw new Error('No auth');

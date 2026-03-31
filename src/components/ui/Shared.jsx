@@ -175,7 +175,7 @@ export function EmojiPicker({ value, onChange }) {
             style={{
               width:'100%', boxSizing:'border-box', marginBottom:8,
               background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.08)',
-              borderRadius:8, padding:'6px 10px', fontSize:12, color:'#e8e8f0', outline:'none',
+              borderRadius:8, padding:'6px 10px', fontSize:16, color:'#e8e8f0', outline:'none',
             }}
           />
           <div style={{ display:'grid', gridTemplateColumns:'repeat(8,1fr)', gap:3, maxHeight:200, overflowY:'auto' }}>

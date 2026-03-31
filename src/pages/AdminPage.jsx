@@ -49,7 +49,7 @@ export function AdminPage() {
                 {u.email === 'foschi246@gmail.com' ? '★ ' : ''}{u.email}
               </span>
               <span style={{ fontSize:11, color:'#8888a0' }}>{fmt(u.created_at)}</span>
-              <span style={{ fontSize:11, color: u.last_sign_in ? '#8888a0' : '#5c5c72' }}>{fmt(u.last_sign_in)}</span>
+              <span style={{ fontSize:11, color: (u.last_seen_at || u.last_sign_in) ? '#8888a0' : '#5c5c72' }}>{fmt(u.last_seen_at || u.last_sign_in)}</span>
             </div>
           ))}
 

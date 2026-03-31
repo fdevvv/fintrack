@@ -59,7 +59,7 @@ function ProfileSection() {
         </div>
         {editing ? (
           <div style={{ flex:1,display:'flex',gap:4 }}>
-            <input value={name} onChange={e => setName(e.target.value)} onKeyDown={e => e.key==='Enter' && saveName()} style={{ ...inputStyle, padding:'5px 8px',fontSize:12,flex:1 }} autoFocus />
+            <input value={name} onChange={e => setName(e.target.value)} onKeyDown={e => e.key==='Enter' && saveName()} style={{ ...inputStyle, padding:'5px 8px',fontSize:16,flex:1 }} autoFocus />
             <button onClick={saveName} style={{ background:'#2dd4a8',border:'none',color:'#0a0a12',fontSize:10,fontWeight:700,padding:'4px 8px',borderRadius:6,cursor:'pointer' }}>✓</button>
           </div>
         ) : (
@@ -229,7 +229,7 @@ export function TopBar({ year, years, setYear, syncing, onSignOut }) {
             {/* Name input */}
             <div style={{ marginBottom:16 }}>
               <label style={{ display:'block',fontSize:11,fontWeight:600,color:'#6c6c84',marginBottom:5 }}>Nombre</label>
-              <input value={editName} onChange={e => setEditName(e.target.value)} onKeyDown={e => e.key==='Enter' && saveName()} style={{ ...inputStyle, padding:'10px 12px',fontSize:14 }} autoFocus />
+              <input value={editName} onChange={e => setEditName(e.target.value)} onKeyDown={e => e.key==='Enter' && saveName()} style={{ ...inputStyle, padding:'10px 12px',fontSize:16 }} autoFocus />
             </div>
             <div style={{ display:'flex',gap:10 }}>
               <button onClick={() => setShowProfile(false)} style={{ flex:1,padding:10,borderRadius:10,border:'1px solid rgba(255,255,255,0.08)',background:'transparent',color:'#8888a0',fontSize:13,fontWeight:600,cursor:'pointer' }}>Cancelar</button>

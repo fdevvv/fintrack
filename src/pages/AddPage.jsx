@@ -101,10 +101,12 @@ export function AddPage() {
             { v:'tarjeta', l:'💳 Tarjeta / Cuotas', c:'#7c6cf0', desc:'Visa, MC, préstamos → Detalle' },
           ].map(opt => (
             <button key={opt.v} type="button" onClick={() => setDestino(opt.v)} style={{
-              flex:1,padding:'10px 12px',borderRadius:10,border:`1px solid ${destino===opt.v?opt.c+'40':'rgba(255,255,255,0.06)'}`,
-              background:destino===opt.v?opt.c+'15':'rgba(255,255,255,0.02)',cursor:'pointer',textAlign:'left',transition:'all .15s',
+              flex:1,padding:'10px 12px',borderRadius:10,
+              border:`1px solid ${destino===opt.v?'rgba(255,255,255,0.22)':'rgba(255,255,255,0.06)'}`,
+              background:destino===opt.v?'rgba(255,255,255,0.07)':'rgba(255,255,255,0.02)',
+              cursor:'pointer',textAlign:'left',transition:'all .15s',
             }}>
-              <div style={{ fontSize:13,fontWeight:600,color:destino===opt.v?opt.c:'#8888a0' }}>{opt.l}</div>
+              <div style={{ fontSize:13,fontWeight:600,color:destino===opt.v?'#e8e8f0':'#8888a0' }}>{opt.l}</div>
               <div style={{ fontSize:10,color:'#5c5c72',marginTop:2 }}>{opt.desc}</div>
             </button>
           ))}
@@ -128,7 +130,7 @@ export function AddPage() {
                   <input value={newSecName} onChange={e => setNewSecName(e.target.value)}
                     placeholder="Ej: Naranja X" autoFocus
                     onKeyDown={e => e.key==='Enter' && handleCreateSection()}
-                    style={{ flex:1,padding:'7px 10px',borderRadius:8,border:'1px solid rgba(124,108,240,0.3)',background:'rgba(255,255,255,0.04)',color:'#e8e8f0',fontSize:12,outline:'none' }}
+                    style={{ flex:1,padding:'7px 10px',borderRadius:8,border:'1px solid rgba(124,108,240,0.3)',background:'rgba(255,255,255,0.04)',color:'#e8e8f0',fontSize:16,outline:'none' }}
                   />
                   <button type="button" onClick={handleCreateSection} style={{ padding:'7px 12px',borderRadius:8,border:'none',background:'#7c6cf0',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer' }}>Crear</button>
                 </div>
@@ -165,7 +167,7 @@ export function AddPage() {
         <Inp label="Monto neto ($)" value={ingM} onChange={sIM} placeholder="0" type="number" />
         <Sel label="Mes" value={ingMes} onChange={sIMes} options={MONTHS_FULL.map((m, i) => ({ v: String(i + 1), l: m }))} />
       </div>
-      <Btn color="#2dd4a8" onClick={async () => { if (!ingM || Number(ingM) <= 0) { showToast('Monto inválido', true); return; } await setIncome(Number(ingMes), Number(ingM)); showToast('✓ Ingreso actualizado'); sIM(''); }} disabled={busy}>Actualizar Ingreso</Btn>
+      <Btn color="#22c55e" onClick={async () => { if (!ingM || Number(ingM) <= 0) { showToast('Monto inválido', true); return; } await setIncome(Number(ingMes), Number(ingM)); showToast('✓ Ingreso actualizado'); sIM(''); }} disabled={busy}>Actualizar Ingreso</Btn>
 
       <Divider />
       <ST color="#60a8f0">Nuevo Rubro</ST>
