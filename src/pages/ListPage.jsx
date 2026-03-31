@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useStore } from '@/stores/useStore';
 import { useUiStore } from '@/stores/uiStore';
+import { transactionsService } from '@/services/transactions.service';
 import { MONTHS, SECTIONS, RUBRO_EMOJI } from '@/utils/constants';
 import { Mn } from '@/utils/money';
 import { exportToExcel } from '@/services/export.service';
@@ -10,7 +11,7 @@ import { useDeleteTransaction } from '@/hooks/transactions/useDeleteTransaction'
 import { ST, MonthBar, ItemIcon, SectionTag, CuotaTag, ConfirmModal } from '@/components/ui/Shared';
 
 export function ListPage() {
-  const { month: storeMonth, setMonth, income, year } = useStore();
+  const { month: storeMonth, setMonth, income, year, renameTransactionGroup } = useStore();
   const { showToast } = useUiStore();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -34,6 +35,23 @@ export function ListPage() {
   const handleSec = (s) => { setFilterSec(s); updateParams(month, s, filterRub); };
   const handleRub = (r) => { setFilterRub(r); updateParams(month, filterSec, r); };
   const [delTarget, setDelTarget] = useState(null);
+  const [editingGroupId, setEditingGroupId] = useState(null);
+  const [editingName, setEditingName] = useState('');
+
+  const startRename = (e, g) => {
+    e.stopPropagation();
+    setEditingGroupId(g.installment_group_id || g.id);
+    setEditingName(g.item_name || g.description || '');
+  };
+  const commitRename = async () => {
+    const name = editingName.trim().toUpperCase();
+    if (!name) { setEditingGroupId(null); return; }
+    try {
+      await transactionsService.updateName(editingGroupId, name);
+      renameTransactionGroup(editingGroupId, name);
+    } catch { showToast('Error al renombrar', true); }
+    setEditingGroupId(null);
+  };
 
   const { filtered, grouped, total, rubrosInData, secsInData } = useTransactions({ month, search, filterRub, filterSec });
   const { remove } = useDeleteTransaction();
@@ -83,7 +101,18 @@ export function ListPage() {
                 <div style={{ display:'flex',alignItems:'center',gap:14,padding:'12px 0',borderBottom:'1px solid rgba(255,255,255,0.04)' }}>
                   <ItemIcon item={g} />
                   <div style={{ flex:1,minWidth:0 }}>
-                    <div style={{ fontSize:14,fontWeight:600,color:'#e8e8f0',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis' }}>{g.item_name||g.description}</div>
+                    {editingGroupId===(g.installment_group_id||g.id) ? (
+                      <input
+                        autoFocus
+                        value={editingName}
+                        onChange={e=>setEditingName(e.target.value.toUpperCase())}
+                        onKeyDown={e=>{if(e.key==='Enter')commitRename();if(e.key==='Escape')setEditingGroupId(null);}}
+                        onBlur={commitRename}
+                        style={{width:'100%',background:'rgba(255,255,255,0.08)',border:'1px solid rgba(124,108,240,0.5)',borderRadius:6,padding:'3px 8px',fontSize:14,fontWeight:600,color:'#e8e8f0',outline:'none',boxSizing:'border-box'}}
+                      />
+                    ) : (
+                      <div style={{ fontSize:14,fontWeight:600,color:'#e8e8f0',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis' }}>{g.item_name||g.description}</div>
+                    )}
                     <div style={{ display:'flex',gap:6,alignItems:'center',marginTop:4,flexWrap:'wrap' }}>
                       <SectionTag section={g.section} />
                       {iT>1 && (month===-1 ? <CuotaTag current={g.items.length} total={iT} /> : <CuotaTag current={cur.installment_current} total={iT} />)}
@@ -91,6 +120,7 @@ export function ListPage() {
                     </div>
                   </div>
                   <div style={{ fontSize:15,fontWeight:700,color:'#e8e8f0',fontVariantNumeric:'tabular-nums',whiteSpace:'nowrap' }}>{Mn.fmt(amt)}</div>
+                  <button onClick={e=>startRename(e,g)} style={{ background:'none',border:'none',color:'#7c6cf0',fontSize:14,cursor:'pointer',padding:'4px',flexShrink:0,opacity:0.6 }}>✏️</button>
                   <button onClick={()=>setDelTarget(cur)} style={{ background:'none',border:'none',color:'#f06070',fontSize:16,cursor:'pointer',padding:'4px',flexShrink:0,opacity:0.6 }}>🗑</button>
                 </div>
               </div>

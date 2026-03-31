@@ -60,6 +60,17 @@ export const transactionsService = {
     if (error) throw error;
   },
 
+  async updateName(groupId, name) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) throw new Error('No authenticated user');
+    const { error } = await supabase
+      .from('transactions')
+      .update({ item_name: name, description: name })
+      .eq('installment_group_id', groupId)
+      .eq('user_id', session.user.id);
+    if (error) throw error;
+  },
+
   async updateUsdRate(id, amountCents, rate) {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) throw new Error('No authenticated user');

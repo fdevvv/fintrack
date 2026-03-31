@@ -3,6 +3,23 @@ import { useStore } from '@/stores/useStore';
 import { useUiStore } from '@/stores/uiStore';
 import { profileService } from '@/services/profile.service';
 import { inputStyle } from '@/utils/styles';
+import { NotificationBell } from '@/components/ui/NotificationBell';
+
+function NotificationSidebarRow() {
+  const { notifHasNew, openNotif } = useUiStore();
+  return (
+    <div style={{ padding:'0 10px 8px' }}>
+      <button onClick={openNotif} style={{ width:'100%',display:'flex',alignItems:'center',gap:10,padding:'10px 12px',borderRadius:10,border:'none',background:'transparent',cursor:'pointer',textAlign:'left' }}>
+        <span style={{ position:'relative',fontSize:18,lineHeight:1 }}>
+          🔔
+          {notifHasNew && <span style={{ position:'absolute',top:-2,right:-2,width:8,height:8,borderRadius:'50%',background:'#f06070',border:'2px solid #08080f' }} />}
+        </span>
+        <span style={{ fontSize:13,color:'#6c6c84',fontWeight:500 }}>Novedades</span>
+        {notifHasNew && <span style={{ marginLeft:'auto',fontSize:9,fontWeight:700,color:'#f06070',background:'rgba(240,96,112,0.12)',padding:'2px 7px',borderRadius:20 }}>NUEVO</span>}
+      </button>
+    </div>
+  );
+}
 
 function ProfileSection() {
   const { profile, updateProfile } = useStore();
@@ -107,6 +124,9 @@ export function Sidebar({ active, onNav, year, years, setYear, onSignOut, isAdmi
         ))}
       </nav>
 
+      {/* Novedades */}
+      <NotificationSidebarRow />
+
       {/* Profile + Sign out */}
       <ProfileSection />
       <div style={{ padding:'0 16px 16px' }}>
@@ -185,6 +205,7 @@ export function TopBar({ year, years, setYear, syncing, onSignOut }) {
             <button onClick={() => years.includes(year-1) && setYear(year-1)} disabled={!years.includes(year-1)} style={{ ...yBS,width:28,height:28,opacity:years.includes(year-1)?1:0.3 }}>‹</button>
             <span style={{ fontSize:14,fontWeight:700,color:'#fff',minWidth:38,textAlign:'center' }}>{year}</span>
             <button onClick={() => years.includes(year+1) && setYear(year+1)} disabled={!years.includes(year+1)} style={{ ...yBS,width:28,height:28,opacity:years.includes(year+1)?1:0.3 }}>›</button>
+            <NotificationBell />
             <button onClick={() => setShowLogout(true)} style={{ padding:'5px 8px',borderRadius:6,border:'1px solid rgba(240,96,112,0.2)',background:'rgba(240,96,112,0.08)',color:'#f06070',fontSize:10,fontWeight:600,cursor:'pointer',marginLeft:2 }}>Cerrar sesión</button>
           </div>
         </div>

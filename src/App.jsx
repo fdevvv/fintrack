@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useStore } from './stores/useStore';
 import { useUiStore } from './stores/uiStore';
@@ -6,6 +6,7 @@ import { useAuth } from './hooks/auth/useAuth';
 import { Sidebar, MobileNav, TopBar } from './components/layout/Layout';
 import { AuthPage } from './components/auth/AuthPage';
 import { Toast } from './components/ui/Shared';
+import { NotificationsPanel } from './components/ui/NotificationBell';
 import { DashPage } from './pages/DashPage';
 import { AddPage } from './pages/AddPage';
 import { ListPage } from './pages/ListPage';
@@ -31,7 +32,8 @@ const ROUTE_PAGES = Object.fromEntries(Object.entries(PAGE_ROUTES).map(([k, v]) 
 export default function App() {
   const { session, authLoading, signOut } = useAuth();
   const { page, setPage, year, years, setYear, loadAll, profile } = useStore();
-  const { syncing, toast, clearToast } = useUiStore();
+  const { syncing, toast, clearToast, notifHasNew, openNotif } = useUiStore();
+  const [showBanner, setShowBanner] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -51,6 +53,13 @@ export default function App() {
   useEffect(() => {
     if (session) loadAll();
   }, [session, year]);
+
+  // Banner de nuevas actualizaciones al entrar a la app
+  useEffect(() => {
+    if (!session || !notifHasNew) return;
+    const timer = setTimeout(() => setShowBanner(true), 1500);
+    return () => clearTimeout(timer);
+  }, [session]);
 
   if (authLoading) {
     return (
@@ -124,6 +133,18 @@ export default function App() {
 
         <MobileNav active={page} onNav={handleNav} isAdmin={profile?.email === 'foschi246@gmail.com'} />
         <Toast toast={toast} onClear={clearToast} />
+
+        {/* Banner de actualización */}
+        {showBanner && (
+          <div style={{ position:'fixed',bottom:80,left:'50%',transform:'translateX(-50%)',zIndex:9000,display:'flex',alignItems:'center',gap:10,background:'#1a1a2e',border:'1px solid rgba(240,168,72,0.3)',borderRadius:14,padding:'10px 14px',boxShadow:'0 8px 32px rgba(0,0,0,0.5)',maxWidth:'90vw',whiteSpace:'nowrap' }}>
+            <span style={{ fontSize:18 }}>🔔</span>
+            <span style={{ fontSize:13,fontWeight:600,color:'#f0a848' }}>¡Hay novedades nuevas!</span>
+            <button onClick={() => { openNotif(); setShowBanner(false); }} style={{ background:'#f0a848',border:'none',borderRadius:8,color:'#0a0a12',fontSize:12,fontWeight:700,padding:'5px 12px',cursor:'pointer' }}>Ver</button>
+            <button onClick={() => setShowBanner(false)} style={{ background:'none',border:'none',color:'#5c5c72',fontSize:16,cursor:'pointer',padding:'2px' }}>✕</button>
+          </div>
+        )}
+
+        <NotificationsPanel />
       </div>
     </>
   );

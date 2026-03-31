@@ -91,6 +91,7 @@ export const useStore = create((set, get) => ({
   appendTransactions: (rows) => set(s => ({ transactions: [...s.transactions, ...(Array.isArray(rows) ? rows : [rows])] })),
   removeTransaction: (id) => set(s => ({ transactions: s.transactions.filter(t => t.id !== id) })),
   removeTransactionGroup: (groupId) => set(s => ({ transactions: s.transactions.filter(t => t.installment_group_id !== groupId) })),
+  renameTransactionGroup: (groupId, name) => set(s => ({ transactions: s.transactions.map(t => t.installment_group_id === groupId ? { ...t, item_name: name, description: name } : t) })),
 
   // Income
   setIncome: async (month, amount) => {

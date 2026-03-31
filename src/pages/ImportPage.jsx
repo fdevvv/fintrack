@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useStore } from '@/stores/useStore';
 import { useUiStore } from '@/stores/uiStore';
-import { RUBRO_EMOJI } from '@/utils/constants';
+import { RUBRO_EMOJI, getSubIcon } from '@/utils/constants';
 import { Mn } from '@/utils/money';
 import { dolarService } from '@/services/dolar.service';
 import { useAddTransaction } from '@/hooks/transactions/useAddTransaction';
@@ -32,6 +32,26 @@ const PDFParser = {
 
 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
+const KNOWN_SUBS = ['NETFLIX','SPOTIFY','YOUTUBE','APPLE','AMAZON','DISNEY','HBO','PARAMOUNT','CRUNCHYROLL','CLAUDE','OPENAI','CHATGPT','ADOBE','MICROSOFT','GOOGLE','DROPBOX','STEAM','TWITCH','DEEZER','MUBI'];
+
+const detectRubro = (nombre, isUSD) => {
+  const u = nombre.toUpperCase();
+  if (KNOWN_SUBS.some(s => u.includes(s))) return 'Suscripciones';
+  return isUSD ? 'Suscripciones' : 'Otros';
+};
+
+function ItemPreview({ nombre, rubro }) {
+  if (rubro === 'Suscripciones') {
+    const svg = getSubIcon(nombre);
+    if (svg) return <div style={{width:30,height:30,borderRadius:7,overflow:'hidden',flexShrink:0}} dangerouslySetInnerHTML={{__html:svg}} />;
+  }
+  return (
+    <div style={{width:30,height:30,borderRadius:7,background:'rgba(255,255,255,0.05)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:15,flexShrink:0}}>
+      {RUBRO_EMOJI[rubro] || '📎'}
+    </div>
+  );
+}
+
 export function ImportPage() {
   const { year, transactions, categories } = useStore();
   const { showToast } = useUiStore();
@@ -43,9 +63,14 @@ export function ImportPage() {
 
   useEffect(()=>{if(window.pdfjsLib){setPdfReady(true);return;}const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';s.onload=()=>{window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';setPdfReady(true);};document.head.appendChild(s);},[]);
 
-  const handleFile=async(file)=>{if(!card){showToast('Seleccioná tarjeta',true);return;}if(!file||file.type!=='application/pdf'){showToast('Solo PDF',true);return;}setFileName(file.name);setParsed(null);setParsing(true);let att=0;while(!window.pdfjsLib&&att<20){await new Promise(r=>setTimeout(r,300));att++;}if(!window.pdfjsLib){showToast('Error PDF',true);setParsing(false);return;}try{const buf=await file.arrayBuffer();const pdf=await window.pdfjsLib.getDocument({data:new Uint8Array(buf)}).promise;let all=[];for(let i=1;i<=pdf.numPages;i++){const p=await pdf.getPage(i);const c=await p.getTextContent();all=all.concat(PDFParser.extractLines(c));}const gastos=card==='VISA'?PDFParser.parseVisa(all):PDFParser.parseMC(all);if(!gastos.length){showToast('Sin gastos en PDF',true);setParsing(false);return;}let rate=usdRate;if(gastos.some(g=>g.isUSD)&&!rate){try{rate=await dolarService.getOficialRate();setUsdRate(rate);}catch{}}const existing=transactions.filter(t=>t.type==='expense');const wm=gastos.map(g=>{const isDup=existing.some(t=>{if(!PDFParser.nameMatch(g.nombre,t.item_name))return false;const sameAmt=g.isUSD?t.usd_amount===g.monto:t.amount_cents===g.monto;return sameAmt;});const mARS=g.isUSD&&rate?Math.round(g.monto*rate):g.isUSD?0:g.monto;return{...g,selected:!isDup,isDup,montoARS:mARS,rateUsed:rate||0,rubro:g.isUSD?'Suscripciones':'Otros'};});setParsed(wm);}catch(e){console.error(e);showToast('Error PDF',true);}setParsing(false);};
+  const handleFile=async(file)=>{if(!card){showToast('Seleccioná tarjeta',true);return;}if(!file||file.type!=='application/pdf'){showToast('Solo PDF',true);return;}setFileName(file.name);setParsed(null);setParsing(true);let att=0;while(!window.pdfjsLib&&att<20){await new Promise(r=>setTimeout(r,300));att++;}if(!window.pdfjsLib){showToast('Error PDF',true);setParsing(false);return;}try{const buf=await file.arrayBuffer();const pdf=await window.pdfjsLib.getDocument({data:new Uint8Array(buf)}).promise;let all=[];for(let i=1;i<=pdf.numPages;i++){const p=await pdf.getPage(i);const c=await p.getTextContent();all=all.concat(PDFParser.extractLines(c));}const gastos=card==='VISA'?PDFParser.parseVisa(all):PDFParser.parseMC(all);if(!gastos.length){showToast('Sin gastos en PDF',true);setParsing(false);return;}let rate=usdRate;if(gastos.some(g=>g.isUSD)&&!rate){try{rate=await dolarService.getOficialRate();setUsdRate(rate);}catch{}}const existing=transactions.filter(t=>t.type==='expense');const wm=gastos.map(g=>{const isDup=existing.some(t=>{if(!PDFParser.nameMatch(g.nombre,t.item_name))return false;const sameAmt=g.isUSD?t.usd_amount===g.monto:t.amount_cents===g.monto;return sameAmt;});const mARS=g.isUSD&&rate?Math.round(g.monto*rate):g.isUSD?0:g.monto;return{...g,selected:!isDup,isDup,montoARS:mARS,rateUsed:rate||0,rubro:detectRubro(g.nombre,g.isUSD)};});setParsed(wm);}catch(e){console.error(e);showToast('Error PDF',true);}setParsing(false);};
 
   const toggle=(idx)=>setParsed(p=>p.map((g,i)=>i===idx?{...g,selected:!g.selected}:g));
+  const updateRubro=(idx,rubro)=>setParsed(p=>p.map((g,i)=>i===idx?{...g,rubro}:g));
+  const updateNombre=(idx,nombre)=>setParsed(p=>p.map((g,i)=>i===idx?{...g,nombre:nombre.toUpperCase()}:g));
+  const expCats=categories.filter(c=>c.type==='expense');
+  const [editingIdx,setEditingIdx]=useState(null);
+  const [editingName,setEditingName]=useState('');
 
   const doImport=async()=>{const sel=parsed.filter(g=>g.selected);if(!sel.length)return;setImporting(true);let c=0;for(const g of sel){let cuotas=1,mpc,startMes=targetMonth;if(g.cuotaTotal>0&&g.cuotaActual>0){const firstMonth=targetMonth-(g.cuotaActual-1);startMes=Math.max(1,firstMonth);const skipped=startMes-firstMonth;cuotas=g.cuotaTotal-skipped;mpc=g.isUSD?g.montoARS:g.monto;}else{mpc=g.isUSD?g.montoARS:g.monto;}const cat=categories.find(x=>x.name===g.rubro&&x.type==='expense');await add({item_name:g.nombre,category_id:cat?.id||null,section:g.tarjeta,amount:mpc,cuotas,start_month:startMes,destino:'tarjeta',usd_amount:g.isUSD?g.monto:null,usd_rate:g.isUSD?g.rateUsed:null});c++;}showToast(`✓ ${c} gastos importados`);setTimeout(()=>{setParsed(null);setFileName('');setImporting(false);if(fileRef.current)fileRef.current.value='';},2000);};
 
@@ -75,12 +100,39 @@ export function ImportPage() {
           <Btn color="#60a8f0" onClick={doImport} disabled={importing||!selC} style={{width:'auto',padding:'8px 20px',marginBottom:0}}>{importing?'...':'Importar '+selC}</Btn>
         </div>
         {parsed.map((g,i)=>(
-          <div key={i} onClick={()=>toggle(i)} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 0',borderBottom:'1px solid rgba(255,255,255,0.04)',cursor:'pointer',opacity:g.selected?1:0.4}}>
-            <div style={{width:20,height:20,borderRadius:6,border:`2px solid ${g.selected?'#60a8f0':'rgba(255,255,255,0.15)'}`,background:g.selected?'#60a8f0':'transparent',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,color:'#fff',flexShrink:0}}>{g.selected&&'✓'}</div>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:13,fontWeight:600,color:'#e8e8f0',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{g.nombre}</div>
-              <div style={{fontSize:10,color:'#5c5c72',marginTop:2}}>{g.isUSD?`USD ${g.monto} → ${Mn.fmt(g.montoARS)}`:Mn.fmt(g.monto)}{g.cuotaTotal>0&&` · ${g.cuotaActual}/${g.cuotaTotal}`}{g.isDup&&' · ⚠️ Dup'}</div>
+          <div key={i} style={{display:'flex',alignItems:'center',gap:8,padding:'10px 0',borderBottom:'1px solid rgba(255,255,255,0.04)'}}>
+            {/* Área clickeable: checkbox + ícono + nombre */}
+            <div onClick={()=>toggle(i)} style={{display:'flex',alignItems:'center',gap:8,flex:1,minWidth:0,cursor:'pointer',opacity:g.selected?1:0.35}}>
+              <div style={{width:20,height:20,borderRadius:6,border:`2px solid ${g.selected?'#60a8f0':'rgba(255,255,255,0.15)'}`,background:g.selected?'#60a8f0':'transparent',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,color:'#fff',flexShrink:0}}>{g.selected&&'✓'}</div>
+              <ItemPreview nombre={g.nombre} rubro={g.rubro} />
+              <div style={{minWidth:0,flex:1}}>
+                {editingIdx===i ? (
+                  <input
+                    autoFocus
+                    value={editingName}
+                    onChange={e=>setEditingName(e.target.value.toUpperCase())}
+                    onKeyDown={e=>{if(e.key==='Enter'){updateNombre(i,editingName);setEditingIdx(null);}if(e.key==='Escape')setEditingIdx(null);}}
+                    onBlur={()=>{updateNombre(i,editingName);setEditingIdx(null);}}
+                    onClick={e=>e.stopPropagation()}
+                    style={{width:'100%',background:'rgba(255,255,255,0.08)',border:'1px solid rgba(96,168,240,0.4)',borderRadius:6,padding:'3px 7px',fontSize:13,fontWeight:600,color:'#e8e8f0',outline:'none',boxSizing:'border-box'}}
+                  />
+                ) : (
+                  <div style={{fontSize:13,fontWeight:600,color:'#e8e8f0',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{g.nombre}</div>
+                )}
+                <div style={{fontSize:10,color:'#5c5c72',marginTop:2}}>{g.isUSD?`USD ${g.monto} → ${Mn.fmt(g.montoARS)}`:Mn.fmt(g.monto)}{g.cuotaTotal>0&&` · ${g.cuotaActual}/${g.cuotaTotal}`}{g.isDup&&' · ⚠️ Dup'}</div>
+              </div>
             </div>
+            {/* Botón editar nombre */}
+            <button onClick={e=>{e.stopPropagation();setEditingIdx(i);setEditingName(g.nombre);}} style={{background:'none',border:'none',color:'#5c5c72',fontSize:13,cursor:'pointer',padding:'2px 4px',flexShrink:0,opacity:0.6}} title="Editar nombre">✏️</button>
+            {/* Selector de rubro — no propaga el toggle */}
+            <select
+              value={g.rubro}
+              onChange={e=>{e.stopPropagation();updateRubro(i,e.target.value);}}
+              onClick={e=>e.stopPropagation()}
+              style={{background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.08)',borderRadius:7,color:'#a0a0b8',fontSize:10,fontWeight:600,padding:'4px 6px',cursor:'pointer',flexShrink:0,maxWidth:110,outline:'none'}}
+            >
+              {expCats.map(c=><option key={c.id} value={c.name}>{c.icon||RUBRO_EMOJI[c.name]||'📎'} {c.name}</option>)}
+            </select>
           </div>
         ))}
       </div>}
