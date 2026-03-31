@@ -29,7 +29,7 @@ export function useTransactions({ month, search, filterRub, filterSec, filterMet
   const grouped = useMemo(() => {
     const map = {};
     filtered.forEach(t => {
-      const key = `${(t.item_name || '').toUpperCase()}||${t.section || 'OTROS'}`;
+      const key = `${(t.item_name || '').toUpperCase()}||${t.section || 'OTROS'}||${t.installment_group_id || t.id}`;
       if (!map[key]) map[key] = { ...t, items: [], totalAmount: 0, maxInstallmentTotal: t.installment_total || 1 };
       map[key].items.push(t);
       map[key].totalAmount += t.amount_cents;
