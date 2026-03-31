@@ -61,10 +61,13 @@ export const transactionsService = {
   },
 
   async updateUsdRate(id, amountCents, rate) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) throw new Error('No authenticated user');
     const { error } = await supabase
       .from('transactions')
       .update({ amount_cents: amountCents, usd_rate: rate })
-      .eq('id', id);
+      .eq('id', id)
+      .eq('user_id', session.user.id);
     if (error) throw error;
   },
 };

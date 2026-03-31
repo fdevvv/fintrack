@@ -10,14 +10,10 @@ export function useSyncUsd() {
   const sync = async () => {
     setLoading(true);
     try {
-      const rate = await dolarService.getMepRate();
+      const rate = await dolarService.getOficialRate();
       if (!rate) throw new Error('Error cotización');
 
-      const currentMonth = new Date().getMonth();
-      const usdTxs = transactions.filter(t =>
-        t.usd_amount != null &&
-        new Date(t.transaction_date).getMonth() === currentMonth
-      );
+      const usdTxs = transactions.filter(t => t.usd_amount != null);
 
       await Promise.all(
         usdTxs.map(tx =>

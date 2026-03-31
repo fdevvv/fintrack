@@ -5,7 +5,7 @@ import { RUBRO_EMOJI, SECTIONS } from '@/utils/constants';
 import { cardStyle, inputStyle } from '@/utils/styles';
 import { categoriesService } from '@/services/categories.service';
 import { exportToExcel } from '@/services/export.service';
-import { ST, Btn, Inp, ConfirmModal } from '@/components/ui/Shared';
+import { ST, Btn, Inp, ConfirmModal, EmojiPicker } from '@/components/ui/Shared';
 
 export function ConfigPage() {
   const { categories, loadAll, transactions, income, year, userSections, addSection, updateSection, removeSection } = useStore();
@@ -65,7 +65,7 @@ export function ConfigPage() {
     if (isEditing) {
       return (
         <div key={cat.id} style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-          <input value={editIcon} onChange={e => setEditIcon(e.target.value)} style={{ ...inputStyle, width: 50, padding: '6px 8px', fontSize: 18, textAlign: 'center' }} maxLength={2} />
+          <EmojiPicker value={editIcon} onChange={setEditIcon} />
           <input value={editName} onChange={e => setEditName(e.target.value)} style={{ ...inputStyle, flex: 1, padding: '6px 10px', fontSize: 13 }} />
           <button onClick={saveEdit} style={{ background: '#2dd4a8', border: 'none', color: '#0a0a12', fontSize: 11, fontWeight: 700, padding: '6px 12px', borderRadius: 6, cursor: 'pointer' }}>✓</button>
           <button onClick={() => setEditId(null)} style={{ background: 'none', border: 'none', color: '#5c5c72', fontSize: 14, cursor: 'pointer' }}>✕</button>

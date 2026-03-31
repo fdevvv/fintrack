@@ -30,6 +30,8 @@ const PDFParser = {
   },
 };
 
+const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
 export function ImportPage() {
   const { year, transactions, categories } = useStore();
   const { showToast } = useUiStore();
@@ -37,6 +39,7 @@ export function ImportPage() {
   const [card,setCard]=useState('');const [fileName,setFileName]=useState('');const [parsing,setParsing]=useState(false);
   const [parsed,setParsed]=useState(null);const [usdRate,setUsdRate]=useState(null);const [importing,setImporting]=useState(false);
   const [pdfReady,setPdfReady]=useState(!!window.pdfjsLib);const fileRef=useRef(null);
+  const [targetMonth,setTargetMonth]=useState(new Date().getMonth()+1);
 
   useEffect(()=>{if(window.pdfjsLib){setPdfReady(true);return;}const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';s.onload=()=>{window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';setPdfReady(true);};document.head.appendChild(s);},[]);
 
@@ -44,7 +47,7 @@ export function ImportPage() {
 
   const toggle=(idx)=>setParsed(p=>p.map((g,i)=>i===idx?{...g,selected:!g.selected}:g));
 
-  const doImport=async()=>{const sel=parsed.filter(g=>g.selected);if(!sel.length)return;setImporting(true);const currentMes=new Date().getMonth()+1;let c=0;for(const g of sel){let cuotas=1,mpc,startMes=currentMes;if(g.cuotaTotal>0&&g.cuotaActual>0){const firstMonth=currentMes-(g.cuotaActual-1);startMes=Math.max(1,firstMonth);const skipped=startMes-firstMonth;cuotas=g.cuotaTotal-skipped;mpc=g.isUSD?g.montoARS:g.monto;}else{mpc=g.isUSD?g.montoARS:g.monto;}const cat=categories.find(x=>x.name===g.rubro&&x.type==='expense');await add({item_name:g.nombre,category_id:cat?.id||null,section:g.tarjeta,amount:mpc,cuotas,start_month:startMes,destino:'tarjeta',usd_amount:g.isUSD?g.monto:null,usd_rate:g.isUSD?g.rateUsed:null});c++;}showToast(`✓ ${c} gastos importados`);setTimeout(()=>{setParsed(null);setFileName('');setImporting(false);if(fileRef.current)fileRef.current.value='';},2000);};
+  const doImport=async()=>{const sel=parsed.filter(g=>g.selected);if(!sel.length)return;setImporting(true);let c=0;for(const g of sel){let cuotas=1,mpc,startMes=targetMonth;if(g.cuotaTotal>0&&g.cuotaActual>0){const firstMonth=targetMonth-(g.cuotaActual-1);startMes=Math.max(1,firstMonth);const skipped=startMes-firstMonth;cuotas=g.cuotaTotal-skipped;mpc=g.isUSD?g.montoARS:g.monto;}else{mpc=g.isUSD?g.montoARS:g.monto;}const cat=categories.find(x=>x.name===g.rubro&&x.type==='expense');await add({item_name:g.nombre,category_id:cat?.id||null,section:g.tarjeta,amount:mpc,cuotas,start_month:startMes,destino:'tarjeta',usd_amount:g.isUSD?g.monto:null,usd_rate:g.isUSD?g.rateUsed:null});c++;}showToast(`✓ ${c} gastos importados`);setTimeout(()=>{setParsed(null);setFileName('');setImporting(false);if(fileRef.current)fileRef.current.value='';},2000);};
 
   const selC=parsed?parsed.filter(g=>g.selected).length:0;
   const selT=parsed?parsed.filter(g=>g.selected).reduce((s,g)=>s+(g.isUSD?g.montoARS:g.monto),0):0;
@@ -53,7 +56,10 @@ export function ImportPage() {
     <div style={{ padding:'0 16px',maxWidth:650,margin:'0 auto' }}>
       <ST color="#60a8f0">Importar Resumen de Tarjeta</ST>
       <p style={{ fontSize:11,color:'#5c5c72',marginBottom:16,lineHeight:1.5 }}>Subí el PDF del resumen de Galicia (Visa o Mastercard).</p>
-      <div style={{ maxWidth:300 }}><Sel label="Tarjeta" value={card} onChange={setCard} options={[{v:'',l:'Seleccionar...'},{v:'VISA',l:'Visa Galicia'},{v:'MASTERCARD',l:'Mastercard Galicia'}]} /></div>
+      <div style={{ display:'flex',gap:12,flexWrap:'wrap',maxWidth:620 }}>
+        <div style={{ flex:1,minWidth:140 }}><Sel label="Tarjeta" value={card} onChange={setCard} options={[{v:'',l:'Seleccionar...'},{v:'VISA',l:'Visa Galicia'},{v:'MASTERCARD',l:'Mastercard Galicia'}]} /></div>
+        <div style={{ flex:1,minWidth:140 }}><Sel label="Mes de imputación" value={targetMonth} onChange={v=>setTargetMonth(Number(v))} options={MONTHS.map((l,i)=>({v:i+1,l}))} /></div>
+      </div>
       <div onClick={()=>card&&fileRef.current?.click()} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(f)handleFile(f);}}
         style={{ border:'2px dashed rgba(255,255,255,0.1)',borderRadius:14,padding:'30px 20px',textAlign:'center',cursor:card?'pointer':'not-allowed',marginBottom:16,background:fileName?'rgba(96,168,240,0.06)':'rgba(255,255,255,0.02)',opacity:card?1:0.5 }}>
         <input ref={fileRef} type="file" accept=".pdf" style={{display:'none'}} onChange={e=>{const f=e.target.files?.[0];if(f)handleFile(f);}} />

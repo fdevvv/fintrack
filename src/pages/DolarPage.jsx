@@ -10,13 +10,28 @@ const NAMES = { Oficial:'Oficial',Blue:'Blue',Tarjeta:'Tarjeta',Bolsa:'MEP','Con
 export function DolarPage() {
   const [cotiz, setCotiz] = useState(null);
   const [loading, setLoading] = useState(false);
-  const load = async () => { setLoading(true); try { setCotiz(await dolarService.fetchAll()); } catch {} setLoading(false); };
+  const [error, setError] = useState(null);
+  const load = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      setCotiz(await dolarService.fetchAll());
+    } catch (e) {
+      setError('No se pudo obtener la cotización. Revisá tu conexión.');
+    }
+    setLoading(false);
+  };
   useEffect(() => { load(); }, []);
   const mapped = cotiz ? ORDER.map(k => ({ key:k,label:NAMES[k],...(cotiz.find(x=>x.nombre===k)||{}) })) : [];
 
   return (
     <div style={{ padding:'0 16px',maxWidth:700,margin:'0 auto' }}>
       <ST color="#f0a848">Cotizaciones del Dólar</ST>
+      {error && (
+        <div style={{ background:'rgba(240,96,112,0.1)',border:'1px solid rgba(240,96,112,0.2)',borderRadius:10,padding:'10px 14px',fontSize:12,color:'#f06070',marginBottom:16 }}>
+          {error}
+        </div>
+      )}
       {loading && !cotiz ? (
         <div style={{ textAlign:'center',padding:30,color:'#5c5c72',fontSize:12 }}>Cargando...</div>
       ) : (
@@ -44,7 +59,7 @@ export function DolarPage() {
           </div>
         </>
       )}
-      <Btn color="rgba(255,255,255,0.08)" onClick={load} style={{ color:'#8888a0' }}>🔄 Actualizar Cotizaciones</Btn>
+      <Btn color="rgba(255,255,255,0.08)" onClick={load} disabled={loading} style={{ color:'#8888a0' }}>{loading ? 'Actualizando...' : '🔄 Actualizar Cotizaciones'}</Btn>
 
       <ST color="#7c6cf0">Inversiones Recomendadas</ST>
       <style>{`

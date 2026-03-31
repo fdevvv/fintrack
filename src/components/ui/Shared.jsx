@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { inputStyle, cardStyle, tagStyle } from '@/utils/styles';
 import { SECTIONS, RUBRO_EMOJI, getSubIcon } from '@/utils/constants';
 
@@ -108,4 +108,93 @@ export function SectionTag({ section }) {
 export function CuotaTag({ current, total }) {
   if (!total || total <= 1) return null;
   return <span style={{ ...tagStyle, fontSize:10, background:'rgba(124,108,240,0.12)', color:'#a8a0f8' }}>Cuota {current}/{total}</span>;
+}
+
+const EMOJI_OPTS = [
+  // Compras & Ropa
+  '🛒','👕','👗','👟','👜','💄','🧴','🧥','🎁','🛍️','🩴','👒','🕶️',
+  // Comida & Delivery
+  '🥩','🥬','🍕','🍔','🥗','🛵','☕','🍰','🍻','🥤','🧃','🍱','🥐','🌮',
+  // Transporte
+  '🚗','⛽','🚌','✈️','🚕','🚲','🛺','🚂','🚐',
+  // Salud & Bienestar
+  '💊','🏥','🦷','🧘','🏋️','🩺','🧬','👓',
+  // Hogar & Servicios
+  '🏠','💡','🔧','📦','🧹','🛁','🌿','🔑','🪴',
+  // Ocio & Entretenimiento
+  '🎮','🎬','🎵','📚','🎟️','⚽','🎲','🎯','🎸','🎤','🎨','🎭',
+  // Finanzas
+  '💳','🏦','💰','💵','🪙','📈','📊','🔐','💹',
+  // Tech & Suscripciones
+  '🔌','📱','💻','🎧','📺','📰','🎓','📡','🖥️','⌚',
+  // Mascotas & Familia
+  '🐕','🐱','👶','🌍',
+  // Misc
+  '⭐','🌟','🎯','❓','📎','🗂️','🏆','🎪','🧩',
+];
+
+export function EmojiPicker({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  const filtered = search
+    ? EMOJI_OPTS.filter(e => e.includes(search))
+    : EMOJI_OPTS;
+
+  return (
+    <div ref={ref} style={{ position:'relative' }}>
+      <button type="button" onClick={() => setOpen(o => !o)} style={{
+        width:44, height:44, borderRadius:10,
+        border:`2px solid ${open ? '#7c6cf0' : 'rgba(255,255,255,0.1)'}`,
+        background:'rgba(255,255,255,0.05)', fontSize:22, cursor:'pointer',
+        display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0,
+      }}>
+        {value || '📎'}
+      </button>
+
+      {open && (
+        <div style={{
+          position:'absolute', top:'calc(100% + 6px)', left:0, zIndex:300,
+          background:'#14141e', border:'1px solid rgba(255,255,255,0.1)',
+          borderRadius:14, padding:10, width:272,
+          boxShadow:'0 12px 40px rgba(0,0,0,0.6)',
+        }}>
+          <input
+            autoFocus
+            placeholder="Buscar emoji..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{
+              width:'100%', boxSizing:'border-box', marginBottom:8,
+              background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.08)',
+              borderRadius:8, padding:'6px 10px', fontSize:12, color:'#e8e8f0', outline:'none',
+            }}
+          />
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(8,1fr)', gap:3, maxHeight:200, overflowY:'auto' }}>
+            {filtered.map(e => (
+              <button key={e} type="button" onClick={() => { onChange(e); setOpen(false); setSearch(''); }}
+                style={{
+                  background: value === e ? 'rgba(124,108,240,0.35)' : 'transparent',
+                  border:'none', borderRadius:6, fontSize:20, padding:'4px 2px',
+                  cursor:'pointer', lineHeight:1, transition:'background .1s',
+                }}>
+                {e}
+              </button>
+            ))}
+            {filtered.length === 0 && (
+              <span style={{ gridColumn:'1/-1', fontSize:11, color:'#5c5c72', padding:'8px 0', textAlign:'center' }}>Sin resultados</span>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
