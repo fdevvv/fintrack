@@ -9,7 +9,7 @@ export function ST({ children, color = '#7c6cf0' }) {
 export function Inp({ label, value, onChange, placeholder, type = 'text', style: extra }) {
   return (
     <div style={{ marginBottom:12, ...extra }}>
-      {label && <label style={{ display:'block',fontSize:11,fontWeight:600,color:'#6c6c84',marginBottom:5 }}>{label}</label>}
+      {label && <label style={{ display:'block',fontSize:11,fontWeight:600,color:'#6c7280',marginBottom:5 }}>{label}</label>}
       <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} inputMode={type==='number'?'numeric':undefined} style={inputStyle} />
     </div>
   );
@@ -18,8 +18,8 @@ export function Inp({ label, value, onChange, placeholder, type = 'text', style:
 export function Sel({ label, value, onChange, options, style: extra }) {
   return (
     <div style={{ marginBottom:12, ...extra }}>
-      {label && <label style={{ display:'block',fontSize:11,fontWeight:600,color:'#6c6c84',marginBottom:5 }}>{label}</label>}
-      <select value={value} onChange={e => onChange(e.target.value)} style={{ ...inputStyle,appearance:'none',WebkitAppearance:'none',backgroundImage:"url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235c5c72' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\")",backgroundRepeat:'no-repeat',backgroundPosition:'right 12px center',paddingRight:32 }}>
+      {label && <label style={{ display:'block',fontSize:11,fontWeight:600,color:'#6c7280',marginBottom:5 }}>{label}</label>}
+      <select value={value} onChange={e => onChange(e.target.value)} style={{ ...inputStyle,appearance:'none',WebkitAppearance:'none',backgroundImage:"url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236c7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\")",backgroundRepeat:'no-repeat',backgroundPosition:'right 12px center',paddingRight:32 }}>
         {options.map((o,i) => <option key={i} value={o.v}>{o.l}</option>)}
       </select>
     </div>
@@ -91,7 +91,7 @@ export function MonthBar({ sel, onSel }) {
   return (
     <div style={{ display:'flex',gap:6,flexWrap:'wrap',padding:'0 0 8px' }}>
       {[{ l:'Todos', v:-1 }, ...months.map((m,i) => ({ l:m, v:i }))].map(c => (
-        <button key={c.v} onClick={() => onSel(c.v)} style={{ padding:'6px 12px',borderRadius:20,border:'none',fontSize:12,fontWeight:600,background:sel===c.v?'#7c6cf0':'rgba(255,255,255,0.05)',color:sel===c.v?'#fff':'#6c6c84',cursor:'pointer',whiteSpace:'nowrap',transition:'all .2s' }}>
+        <button key={c.v} onClick={() => onSel(c.v)} style={{ padding:'6px 12px',borderRadius:20,border:'none',fontSize:12,fontWeight:600,background:sel===c.v?'#7c6cf0':'rgba(255,255,255,0.05)',color:sel===c.v?'#fff':'#6c7280',cursor:'pointer',whiteSpace:'nowrap',transition:'all .2s' }}>
           {c.l}
         </button>
       ))}
@@ -190,7 +190,7 @@ export function EmojiPicker({ value, onChange }) {
               </button>
             ))}
             {filtered.length === 0 && (
-              <span style={{ gridColumn:'1/-1', fontSize:11, color:'#5c5c72', padding:'8px 0', textAlign:'center' }}>Sin resultados</span>
+              <span style={{ gridColumn:'1/-1', fontSize:11, color:'#6c7280', padding:'8px 0', textAlign:'center' }}>Sin resultados</span>
             )}
           </div>
         </div>

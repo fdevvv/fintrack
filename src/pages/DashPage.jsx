@@ -5,6 +5,7 @@ import { cardStyle, tooltipStyle, tooltipLabel, tooltipItem, tooltipWrapper, too
 import { useDashboard } from '@/hooks/analytics/useDashboard';
 import { useMonthComparison } from '@/hooks/analytics/useMonthComparison';
 import { useMonthlyIncome } from '@/hooks/income/useMonthlyIncome';
+import { useSavingsGoals } from '@/hooks/savings/useSavingsGoals';
 import { MonthlyIncomeHistory } from '@/components/income/MonthlyIncomeHistory';
 import { Pnl } from '@/components/ui/Shared';
 import {
@@ -16,7 +17,9 @@ export function DashPage() {
   const {
     mo, sectionBarData, rubroData, rubroTotal,
     alerts, budgetEntries, incomeVsExpenseData, cards,
+    gastosDiarios, todaySpent, weekSpent, dailyAvg, projection, daysElapsed, daysInMonth,
   } = useDashboard();
+  const { goals } = useSavingsGoals();
   const { data: cmp, loading: cmpLoading } = useMonthComparison();
   const ttS = tooltipStyle;
 
@@ -44,16 +47,16 @@ export function DashPage() {
     if (e.key === 'Escape') cancelEdit();
   };
 
-  const varColor = v => v > 0 ? '#2dd4a8' : v < 0 ? '#f06070' : '#6c6c84';
+  const varColor = v => v > 0 ? '#2dd4a8' : v < 0 ? '#f06070' : '#6c7280';
   const varLabel = v => v === 0 ? '—' : (v > 0 ? '+' : '') + v + '%';
 
   function DashCard({ card: c }) {
     const [exp, setExp] = useState(false);
     return (
       <div style={cardStyle} onClick={() => setExp(!exp)} title={c.f}>
-        <div style={{ fontSize:10,color:'#6c6c84',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px' }}>{c.l}</div>
-        <div style={{ fontSize:exp?14:20,fontWeight:800,color:c.c,letterSpacing:'-0.5px',margin:'4px 0 2px',cursor:'pointer',transition:'font-size .15s' }}>{exp?c.f:c.v}</div>
-        <div style={{ fontSize:10,color:'#5c5c72' }}>{c.s}</div>
+        <div style={{ fontSize:10,color:'#6c7280',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px' }}>{c.l}</div>
+        <div style={{ fontSize:exp?13:26,fontWeight:800,color:c.c,letterSpacing:'-0.5px',margin:'4px 0 2px',cursor:'pointer',transition:'font-size .15s',fontVariantNumeric:'tabular-nums' }}>{exp?c.f:c.v}</div>
+        <div style={{ fontSize:10,color:'#6c7280' }}>{c.s}</div>
       </div>
     );
   }
@@ -72,6 +75,20 @@ export function DashPage() {
       {/* Summary cards */}
       <div className="dash-cards">
         {cards.map((c,i) => <DashCard key={i} card={c} />)}
+      </div>
+
+      {/* Quick summary chips */}
+      <div style={{ display:'flex',gap:8,marginBottom:12,flexWrap:'wrap' }}>
+        {[
+          { l:'Hoy', v: Mn.fmt(todaySpent), c:'#6c7280' },
+          { l:'Esta semana', v: Mn.fmt(weekSpent), c:'#6c7280' },
+          { l:'Promedio diario', v: Mn.fmt(dailyAvg), c:'#6c7280' },
+        ].map(chip => (
+          <div key={chip.l} style={{ background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.07)',borderRadius:10,padding:'7px 12px',display:'flex',flexDirection:'column',gap:2 }}>
+            <span style={{ fontSize:9,fontWeight:600,color:'#6c7280',textTransform:'uppercase',letterSpacing:'0.5px' }}>{chip.l}</span>
+            <span style={{ fontSize:14,fontWeight:700,color:'#e8e8f0',fontVariantNumeric:'tabular-nums' }}>{chip.v}</span>
+          </div>
+        ))}
       </div>
 
       {/* Monthly income editor */}
@@ -103,19 +120,19 @@ export function DashPage() {
             </button>
             <button
               onClick={cancelEdit}
-              className="px-3 py-2 rounded-lg text-sm bg-white/5 text-[#6c6c84] cursor-pointer hover:text-[#e8e8f0] transition-colors"
+              className="px-3 py-2 rounded-lg text-sm bg-white/5 text-[#6c7280] cursor-pointer hover:text-[#e8e8f0] transition-colors"
             >
               ✕
             </button>
           </div>
         ) : (
           <div className="flex items-center justify-between">
-            <span className="text-2xl font-extrabold text-[#2dd4a8] tracking-tight">
+            <span style={{ fontSize:30,fontWeight:800,color:'#2dd4a8',letterSpacing:'-0.5px',fontVariantNumeric:'tabular-nums' }}>
               {fmtMoney(incomeValue)}
             </span>
             <button
               onClick={startEdit}
-              className="px-3 py-1.5 rounded-lg border border-white/10 bg-white/[0.04] text-[#6c6c84] text-sm cursor-pointer hover:text-[#e8e8f0] transition-colors"
+              className="px-3 py-1.5 rounded-lg border border-white/10 bg-white/[0.04] text-[#6c7280] text-sm cursor-pointer hover:text-[#e8e8f0] transition-colors"
               title="Editar ingreso mensual"
             >
               ✏️
@@ -140,7 +157,7 @@ export function DashPage() {
             const vrn = cmp?.variation?.[key] ?? 0;
             return (
               <div key={key} style={{ background:'rgba(255,255,255,0.03)',borderRadius:10,padding:'10px 12px' }}>
-                <div style={{ fontSize:10,color:'#6c6c84',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:4 }}>
+                <div style={{ fontSize:10,color:'#6c7280',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:4 }}>
                   {label}
                 </div>
                 {cmpLoading ? (
@@ -170,6 +187,17 @@ export function DashPage() {
         </div>
       ))}
 
+      {/* Month-end projection */}
+      {daysElapsed >= 3 && gastosDiarios > 0 && (
+        <div style={{ padding:'10px 14px',borderRadius:10,marginBottom:8,background:'rgba(96,168,240,0.08)',border:'1px solid rgba(96,168,240,0.15)',display:'flex',justifyContent:'space-between',alignItems:'center' }}>
+          <div>
+            <span style={{ fontSize:11,fontWeight:600,color:'#60a8f0' }}>Proyección de cierre</span>
+            <div style={{ fontSize:10,color:'#6c7280',marginTop:1 }}>A este ritmo ({daysElapsed} días)</div>
+          </div>
+          <span style={{ fontSize:17,fontWeight:800,color:'#60a8f0',fontVariantNumeric:'tabular-nums' }}>{Mn.fmt(projection)}</span>
+        </div>
+      )}
+
       {/* Budget progress */}
       {budgetEntries.length > 0 && (
         <Pnl title={`Presupuestos ${MONTHS[mo]}`}>
@@ -177,13 +205,34 @@ export function DashPage() {
             <div key={i} style={{ marginBottom:i<budgetEntries.length-1?12:0 }}>
               <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4 }}>
                 <span style={{ fontSize:11,fontWeight:600,color:'#e8e8f0' }}>{RUBRO_EMOJI[b.rubro]||'📎'} {b.rubro}</span>
-                <span style={{ fontSize:10,color:b.pct>100?'#f06070':b.pct>80?'#f0a848':'#5c5c72' }}>{Mn.fmt(b.spent)} / {Mn.fmt(b.limit)}</span>
+                <span style={{ fontSize:10,color:b.pct>100?'#f06070':b.pct>80?'#f0a848':'#6c7280' }}>{Mn.fmt(b.spent)} / {Mn.fmt(b.limit)}</span>
               </div>
               <div style={{ height:6,borderRadius:3,background:'rgba(255,255,255,0.06)',overflow:'hidden' }}>
                 <div style={{ height:'100%',borderRadius:3,width:`${Math.min(b.pct,100)}%`,background:b.pct>100?'#f06070':b.pct>80?'#f0a848':'#2dd4a8',transition:'width .5s' }} />
               </div>
             </div>
           ))}
+        </Pnl>
+      )}
+
+      {/* Savings goals */}
+      {goals.length > 0 && (
+        <Pnl title="Metas de ahorro">
+          {goals.map(g => {
+            const pct = g.target_amount > 0 ? Math.min((g.saved_amount / g.target_amount) * 100, 100) : 0;
+            return (
+              <div key={g.id} style={{ marginBottom: goals.indexOf(g) < goals.length-1 ? 16 : 0 }}>
+                <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6 }}>
+                  <span style={{ fontSize:15,fontWeight:700,color:'#e8e8f0' }}>🎯 {g.name}</span>
+                  <span style={{ fontSize:13,fontWeight:600,color: pct >= 100 ? '#4ade80' : '#6c7280',fontVariantNumeric:'tabular-nums' }}>{Mn.fmt(g.saved_amount)} / {Mn.fmt(g.target_amount)}</span>
+                </div>
+                <div style={{ height:7,borderRadius:4,background:'rgba(255,255,255,0.06)',overflow:'hidden' }}>
+                  <div style={{ height:'100%',borderRadius:4,width:`${pct}%`,background: pct >= 100 ? '#4ade80' : '#7c6cf0',transition:'width .5s' }} />
+                </div>
+                {g.deadline && <div style={{ fontSize:11,color:'#6c7280',marginTop:4 }}>Meta: {g.deadline}</div>}
+              </div>
+            );
+          })}
         </Pnl>
       )}
 

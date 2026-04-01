@@ -12,13 +12,26 @@ export function useAuth() {
       setAuthLoading(false);
       if (session) profileService.touch().catch(() => {});
     });
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       if (session && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
         profileService.touch().catch(() => {});
       }
     });
-    return () => subscription.unsubscribe();
+
+    // Cuando el usuario vuelve al tab, forzar refresh del token si expiró
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        supabase.auth.getSession().catch(() => {});
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      subscription.unsubscribe();
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, []);
 
   const signOut = async () => {

@@ -13,14 +13,14 @@ export const inputStyle = {
 };
 
 export const cardStyle = {
-  background: 'rgba(255,255,255,0.03)',
+  background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)',
   borderRadius: 14,
   padding: '14px 16px',
-  border: '1px solid rgba(255,255,255,0.05)',
+  border: '1px solid rgba(255,255,255,0.08)',
 };
 
 export const tooltipStyle = {
-  background: '#12121e',
+  background: '#16162a',
   border: '1px solid rgba(255,255,255,0.12)',
   borderRadius: 10,
   fontSize: 12,

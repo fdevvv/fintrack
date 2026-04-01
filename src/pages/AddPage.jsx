@@ -5,6 +5,7 @@ import { MONTHS_FULL, SECTIONS, RUBRO_EMOJI } from '@/utils/constants';
 import { Mn } from '@/utils/money';
 import { useAddTransaction } from '@/hooks/transactions/useAddTransaction';
 import { useSyncUsd } from '@/hooks/transactions/useSyncUsd';
+import { useSavingsGoals } from '@/hooks/savings/useSavingsGoals';
 import { ST, Inp, Sel, Btn, Divider } from '@/components/ui/Shared';
 
 export function AddPage() {
@@ -12,6 +13,7 @@ export function AddPage() {
   const { showToast } = useUiStore();
   const { add, loading: addLoading } = useAddTransaction();
   const { sync, loading: syncLoading } = useSyncUsd();
+  const { goals, addGoal, removeGoal, updateSaved } = useSavingsGoals();
   const busy = addLoading || syncLoading;
   const [item, sI] = useState('');
   const [sec, sS] = useState('');
@@ -29,6 +31,17 @@ export function AddPage() {
   const [budMonto, setBudMonto] = useState('');
   const [newSecName, setNewSecName] = useState('');
   const [showNewSec, setShowNewSec] = useState(false);
+  const [goalName, setGoalName] = useState('');
+  const [goalTarget, setGoalTarget] = useState('');
+  const [goalSaved, setGoalSaved] = useState('');
+  const [goalDeadline, setGoalDeadline] = useState('');
+  const [repeatMes, setRepeatMes] = useState(() => {
+    const m = new Date().getMonth();
+    return String(m === 0 ? 11 : m - 1);
+  });
+  const [repeating, setRepeating] = useState(false);
+  const [addingTo, setAddingTo] = useState(null);
+  const [addAmt, setAddAmt] = useState('');
 
   const expenseCats = categories.filter(c => c.type === 'expense');
 
@@ -89,12 +102,13 @@ export function AddPage() {
   return (
     <div style={{ padding: '0 16px', maxWidth: 600, margin: '0 auto' }}>
       <ST color="#7c6cf0">Agregar Gasto</ST>
+      <p style={{ fontSize:11,color:'#6c7280',marginBottom:14,lineHeight:1.5 }}>Registrá un gasto a mano. Lo que agregues como <span style={{color:'#2dd4a8',fontWeight:600}}>Gasto del día</span> se ve en la solapa del mes, y lo que sea <span style={{color:'#7c6cf0',fontWeight:600}}>Tarjeta / Cuotas</span> aparece en Detalle.</p>
 
       <Inp label="Nombre del gasto" value={item} onChange={sI} placeholder="Ej: NETFLIX, ZAPATILLAS" />
 
       {/* Destino: Mes (manual) vs Detalle (tarjeta/préstamo) */}
       <div style={{ marginBottom:12 }}>
-        <label style={{ display:'block',fontSize:11,fontWeight:600,color:'#6c6c84',marginBottom:5 }}>¿Dónde va este gasto?</label>
+        <label style={{ display:'block',fontSize:11,fontWeight:600,color:'#6c7280',marginBottom:5 }}>¿Dónde va este gasto?</label>
         <div style={{ display:'flex',gap:6 }}>
           {[
             { v:'manual', l:'💵 Gasto del día', c:'#2dd4a8', desc:'Efectivo, QR, débito, transferencia → Mes' },
@@ -107,7 +121,7 @@ export function AddPage() {
               cursor:'pointer',textAlign:'left',transition:'all .15s',
             }}>
               <div style={{ fontSize:13,fontWeight:600,color:destino===opt.v?'#e8e8f0':'#8888a0' }}>{opt.l}</div>
-              <div style={{ fontSize:10,color:'#5c5c72',marginTop:2 }}>{opt.desc}</div>
+              <div style={{ fontSize:10,color:'#6c7280',marginTop:2 }}>{opt.desc}</div>
             </button>
           ))}
         </div>
@@ -163,14 +177,47 @@ export function AddPage() {
 
       <Divider />
       <ST color="#2dd4a8">Actualizar Ingreso</ST>
+      <p style={{ fontSize:11,color:'#6c7280',marginBottom:14,lineHeight:1.5 }}>Ingresá tu sueldo o ingreso neto de cada mes. Se usa para calcular el balance mensual y cuánto ahorrás.</p>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
         <Inp label="Monto neto ($)" value={ingM} onChange={sIM} placeholder="0" type="number" />
         <Sel label="Mes" value={ingMes} onChange={sIMes} options={MONTHS_FULL.map((m, i) => ({ v: String(i + 1), l: m }))} />
       </div>
       <Btn color="#22c55e" onClick={async () => { if (!ingM || Number(ingM) <= 0) { showToast('Monto inválido', true); return; } await setIncome(Number(ingMes), Number(ingM)); showToast('✓ Ingreso actualizado'); sIM(''); }} disabled={busy}>Actualizar Ingreso</Btn>
+      <Sel label="Repetir gastos de" value={repeatMes} onChange={setRepeatMes} options={MONTHS_FULL.map((m, i) => ({ v: String(i), l: m }))} />
+      <Btn color="rgba(255,255,255,0.06)" disabled={busy||repeating} style={{ color:'#a8a0f8' }} onClick={async () => {
+        const mo = Number(repeatMes);
+        const manualLast = transactions.filter(t =>
+          t.type === 'expense' && !t.section && new Date(t.transaction_date).getMonth() === mo
+        );
+        if (!manualLast.length) { showToast(`Sin gastos manuales en ${MONTHS_FULL[mo]}`, true); return; }
+        setRepeating(true);
+        let c = 0;
+        const nowMonth = new Date().getMonth() + 1;
+        for (const t of manualLast) {
+          try {
+            await add({
+              item_name: t.item_name || t.description || 'Gasto',
+              category_id: t.category_id || null,
+              section: '',
+              amount: t.amount_cents,
+              cuotas: 1,
+              start_month: nowMonth,
+              currency: t.currency || 'ARS',
+              payment_method: t.payment_method || 'cash',
+              destino: 'manual',
+            });
+            c++;
+          } catch {}
+        }
+        showToast(`✓ ${c} gastos de ${MONTHS_FULL[mo]} copiados`);
+        setRepeating(false);
+      }}>
+        {repeating ? 'Copiando...' : '🔁 Repetir gastos'}
+      </Btn>
 
       <Divider />
       <ST color="#60a8f0">Nuevo Rubro</ST>
+      <p style={{ fontSize:11,color:'#6c7280',marginBottom:14,lineHeight:1.5 }}>Creá una categoría de gasto personalizada, como Farmacia, Mascota o Gimnasio.</p>
       <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
         <div style={{ flex: 1 }}><Inp label="Nombre" value={nRub} onChange={sNR} placeholder="Ej: Farmacia" /></div>
         <button onClick={async () => { if (!nRub.trim()) return; await addCategory(nRub.trim(), 'expense'); showToast(`✓ "${nRub}" agregado`); sNR(''); }} style={{ padding: '11px 20px', borderRadius: 10, border: 'none', background: '#60a8f0', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', marginBottom: 12 }}>Agregar</button>
@@ -179,6 +226,7 @@ export function AddPage() {
 
       <Divider />
       <ST color="#e070b0">Presupuestos</ST>
+      <p style={{ fontSize:11,color:'#6c7280',marginBottom:14,lineHeight:1.5 }}>Fijá un límite de gasto mensual por rubro. Te avisamos en el panel cuando estás cerca de superarlo.</p>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 8 }}>
         <Sel label="Rubro" value={budRub} onChange={setBudRub} options={[{ v: '', l: 'Seleccionar...' }, ...expenseCats.map(c => ({ v: c.name, l: `${RUBRO_EMOJI[c.name] || '📎'} ${c.name}` }))]} />
         <Inp label="Límite ($)" value={budMonto} onChange={setBudMonto} placeholder="0" type="number" />
@@ -193,7 +241,76 @@ export function AddPage() {
 
       <Divider />
       <ST color="#f0a848">Crear Año</ST>
+      <p style={{ fontSize:11,color:'#6c7280',marginBottom:14,lineHeight:1.5 }}>Habilitá un nuevo año para poder registrar y consultar los gastos de ese período.</p>
       <Btn color="#f0a848" onClick={async () => { const ny = Math.max(...years) + 1; await createYear(ny); showToast(`✓ Año ${ny} creado`); }}>Crear {Math.max(...years) + 1}</Btn>
+
+      <Divider />
+      <ST color="#4ade80">Metas de Ahorro</ST>
+      <p style={{ fontSize:11,color:'#6c7280',marginBottom:14,lineHeight:1.5 }}>Definí un objetivo de ahorro con un monto y fecha límite. Se muestra en el panel con barra de progreso.</p>
+      <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:10 }}>
+        <Inp label="Nombre" value={goalName} onChange={setGoalName} placeholder="Ej: Vacaciones" />
+        <Inp label="Objetivo ($)" value={goalTarget} onChange={setGoalTarget} placeholder="500000" type="number" />
+      </div>
+      <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:10 }}>
+        <Inp label="Ahorrado hasta ahora ($)" value={goalSaved} onChange={setGoalSaved} placeholder="0" type="number" />
+        <Inp label="Fecha límite (Ej: Dic 2026)" value={goalDeadline} onChange={setGoalDeadline} placeholder="Dic 2026" />
+      </div>
+      <Btn color="#4ade80" style={{ color:'#0a0a12' }} onClick={() => {
+        if (!goalName.trim() || !goalTarget || Number(goalTarget) <= 0) { showToast('Completá nombre y objetivo', true); return; }
+        addGoal({ name: goalName.trim(), target: Number(goalTarget), saved: Number(goalSaved) || 0, deadline: goalDeadline.trim() });
+        showToast('✓ Meta guardada');
+        setGoalName(''); setGoalTarget(''); setGoalSaved(''); setGoalDeadline('');
+      }}>Guardar Meta</Btn>
+
+      {goals.length > 0 && goals.map(g => {
+        const pct = g.target_amount > 0 ? Math.min(100, Math.round((g.saved_amount / g.target_amount) * 100)) : 0;
+        const open = addingTo === g.id;
+        return (
+          <div key={g.id} style={{ padding:'10px 0',borderBottom:'1px solid rgba(255,255,255,0.04)' }}>
+            <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center' }}>
+              <div>
+                <span style={{ fontSize:15,color:'#e8e8f0',fontWeight:700 }}>🎯 {g.name}</span>
+                {g.deadline && <span style={{ fontSize:11,color:'#6c7280',marginLeft:8 }}>{g.deadline}</span>}
+              </div>
+              <div style={{ display:'flex',alignItems:'center',gap:8 }}>
+                <span style={{ fontSize:13,color:'#6c7280',fontVariantNumeric:'tabular-nums' }}>{Mn.fmt(g.saved_amount)} / {Mn.fmt(g.target_amount)}</span>
+                <button onClick={() => { setAddingTo(open ? null : g.id); setAddAmt(''); }} style={{ background:open?'rgba(74,222,128,0.15)':'rgba(255,255,255,0.05)',border:'none',borderRadius:6,color:'#4ade80',fontSize:13,fontWeight:700,cursor:'pointer',padding:'2px 7px',lineHeight:1 }}>+</button>
+                <button onClick={() => removeGoal(g.id)} style={{ background:'none',border:'none',color:'#f06070',fontSize:14,cursor:'pointer',padding:'2px 4px',opacity:0.6 }}>✕</button>
+              </div>
+            </div>
+            <div style={{ marginTop:6,height:4,borderRadius:4,background:'rgba(255,255,255,0.07)',overflow:'hidden' }}>
+              <div style={{ height:'100%',width:`${pct}%`,background:'#4ade80',borderRadius:4,transition:'width .3s' }} />
+            </div>
+            {open && (
+              <div style={{ display:'flex',gap:6,marginTop:8,alignItems:'center' }}>
+                <input
+                  autoFocus
+                  type="number"
+                  inputMode="numeric"
+                  placeholder="Monto a agregar"
+                  value={addAmt}
+                  onChange={e => setAddAmt(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && addAmt && Number(addAmt) > 0) {
+                      updateSaved(g.id, g.saved_amount + Number(addAmt));
+                      showToast(`✓ +${Mn.fmt(Number(addAmt))} a "${g.name}"`);
+                      setAddingTo(null); setAddAmt('');
+                    }
+                  }}
+                  style={{ flex:1,padding:'7px 10px',borderRadius:8,border:'1px solid rgba(74,222,128,0.3)',background:'rgba(255,255,255,0.04)',color:'#e8e8f0',fontSize:16,outline:'none' }}
+                />
+                <button type="button" onClick={() => {
+                  if (!addAmt || Number(addAmt) <= 0) return;
+                  updateSaved(g.id, g.saved_amount + Number(addAmt));
+                  showToast(`✓ +${Mn.fmt(Number(addAmt))} a "${g.name}"`);
+                  setAddingTo(null); setAddAmt('');
+                }} style={{ padding:'7px 14px',borderRadius:8,border:'none',background:'#4ade80',color:'#0a0a12',fontSize:12,fontWeight:700,cursor:'pointer' }}>Agregar</button>
+              </div>
+            )}
+          </div>
+        );
+      })}
+
       <div style={{ height: 80 }} />
     </div>
   );

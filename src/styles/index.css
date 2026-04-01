@@ -5,21 +5,22 @@
 @tailwind utilities;
 
 :root {
-  --bg-primary: #0a0a12;
-  --bg-secondary: #0f0f1a;
-  --bg-card: rgba(255,255,255,0.03);
+  --bg-primary: #0d0d18;
+  --bg-secondary: #12121f;
+  --bg-card: rgba(255,255,255,0.04);
   --bg-card-hover: rgba(255,255,255,0.05);
   --bg-input: rgba(255,255,255,0.04);
-  --border: rgba(255,255,255,0.06);
+  --border: rgba(255,255,255,0.08);
   --border-hover: rgba(255,255,255,0.12);
   --text-primary: #e8e8f0;
   --text-secondary: #8888a0;
-  --text-muted: #5c5c72;
-  --text-dim: #6c6c84;
+  --text-muted: #6c7280;
+  --text-dim: #6c7280;
   --accent-purple: #7c6cf0;
   --accent-green: #2dd4a8;
+  --accent-green-vivid: #4ade80;
   --accent-red: #f06070;
-  --accent-orange: #f0a848;
+  --accent-orange: #fbbf24;
   --accent-blue: #60a8f0;
   --accent-pink: #e070b0;
 }
@@ -42,7 +43,7 @@
     border-color: var(--border) !important;
   }
   input::placeholder, textarea::placeholder { color: var(--text-muted); }
-  select option { background: #14141e; color: var(--text-primary); }
+  select option { background: #1a1a2e; color: var(--text-primary); }
 }
 
 @layer components {
@@ -62,4 +63,10 @@
     to { opacity: 1; transform: translateY(0); }
   }
   @keyframes spin { to { transform: rotate(360deg); } }
+}
+
+@media print {
+  nav, .ft-bottom-nav, .ft-spinner { display: none !important; }
+  body { background: #fff !important; color: #000 !important; }
+  .card { border: 1px solid #ddd !important; background: #fff !important; }
 }

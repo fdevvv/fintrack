@@ -61,6 +61,33 @@ export function useDashboard() {
     [transactions, mo]
   );
 
+  // Today's spending
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+  const todaySpent = useMemo(() =>
+    expenses
+      .filter(t => new Date(t.transaction_date).getMonth() === mo && t.transaction_date.slice(0,10) === todayStr)
+      .reduce((s, t) => s + t.amount_cents, 0),
+    [expenses, mo, todayStr]
+  );
+
+  // This week's spending
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() - today.getDay());
+  const weekStartStr = weekStart.toISOString().split('T')[0];
+  const weekSpent = useMemo(() =>
+    expenses
+      .filter(t => new Date(t.transaction_date).getMonth() === mo && t.transaction_date.slice(0,10) >= weekStartStr)
+      .reduce((s, t) => s + t.amount_cents, 0),
+    [expenses, mo, weekStartStr]
+  );
+
+  // Daily average and month-end projection
+  const daysElapsed = today.getDate();
+  const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+  const dailyAvg = daysElapsed > 0 ? Math.round(gastosDiarios / daysElapsed) : 0;
+  const projection = Math.round(dailyAvg * daysInMonth);
+
   // Restante = disponible actual − total gastado del mes
   const restante = ingresoNeto - gastosDiarios;
 
@@ -151,5 +178,11 @@ export function useDashboard() {
     restante,
     incomeVsExpenseData,
     cards,
+    todaySpent,
+    weekSpent,
+    dailyAvg,
+    projection,
+    daysElapsed,
+    daysInMonth,
   };
 }

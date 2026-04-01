@@ -6,6 +6,24 @@
  */
 export const UPDATES = [
   {
+    id: 'update-20260401-1',
+    date: '1 de abril de 2026 · 14:00 (ARG)',
+    title: 'Panel rediseñado, metas de ahorro, gráficos y nuevas herramientas',
+    items: [
+      'Panel — Chips rápidos: en la parte superior del panel ahora aparecen tres chips con cuánto gastaste hoy, cuánto gastaste esta semana y cuál es tu promedio diario del mes.',
+      'Panel — Proyección de cierre: a partir del día 3 del mes el panel calcula cuánto gastarías a fin de mes si seguís al mismo ritmo, basándose en tu promedio diario.',
+      'Panel — Comparación vs mes anterior: podés ver en un solo vistazo cómo cambiaron tus ingresos, gastos y balance respecto al mes pasado, con la variación en porcentaje.',
+      'Panel — Ingreso neto editable: el ingreso del mes se puede modificar directamente desde el panel tocando el lápiz, sin tener que ir a Agregar.',
+      'Panel — Metas de ahorro: nueva sección en el panel que muestra todas tus metas con barra de progreso, monto ahorrado y objetivo.',
+      'Panel — Gráfico de gastos por tarjeta: barras apiladas que muestran cuánto gastaste por tarjeta (Visa, Mastercard, etc.) mes a mes.',
+      'Panel — Gráfico de distribución por rubro: torta con el desglose del mes actual por categoría, para ver dónde va tu plata.',
+      'Panel — Gráfico de ingreso vs gasto: línea comparativa entre lo que entra y lo que sale mes a mes durante el año.',
+      'Metas de ahorro: creá objetivos con nombre, monto y fecha límite. Se guardan en la nube, se ven desde cualquier dispositivo y no se pierden al limpiar el caché.',
+      'Metas de ahorro — Agregar dinero: con el botón "+" en cada meta podés ir sumando lo que vas ahorrando sin borrar y recrear la meta.',
+      'Repetir gastos: copiá todos los gastos manuales de cualquier mes al mes actual con un solo botón, ahora con selector para elegir el mes de origen.',
+    ],
+  },
+  {
     id: 'update-20260331-1',
     date: '31 de marzo de 2026 · 14:06 (ARG)',
     title: 'Mejoras en ingreso neto, formulario y correcciones en iPhone',

@@ -21,7 +21,7 @@ function calcPct(current, previous) {
 
 function PctBadge({ pct }) {
   if (pct === null) return <span style={{ color: '#3c3c54', fontSize: 11 }}>—</span>;
-  const color = pct > 0 ? '#2dd4a8' : pct < 0 ? '#f06070' : '#6c6c84';
+  const color = pct > 0 ? '#2dd4a8' : pct < 0 ? '#f06070' : '#6c7280';
   return <span style={{ fontSize: 11, fontWeight: 600, color }}>{(pct > 0 ? '+' : '') + pct + '%'}</span>;
 }
 
@@ -43,7 +43,7 @@ const INLINE_INPUT = {
   padding: '4px 8px', fontSize: 16, fontWeight: 600, color: '#e8e8f0', outline: 'none',
 };
 const BTN_SAVE   = { background: '#22c55e', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 12, fontWeight: 700, color: '#0a0a12', cursor: 'pointer' };
-const BTN_CANCEL = { background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: 6, padding: '4px 8px', fontSize: 12, color: '#6c6c84', cursor: 'pointer' };
+const BTN_CANCEL = { background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: 6, padding: '4px 8px', fontSize: 12, color: '#6c7280', cursor: 'pointer' };
 
 export function MonthlyIncomeHistory() {
   const navigate = useNavigate();
@@ -132,7 +132,7 @@ export function MonthlyIncomeHistory() {
                 {isEditing ? renderEditControls(row.month) : (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                     <PctBadge pct={calcPct(row.amount, rows[i - 1]?.amount ?? null)} />
-                    <span style={{ fontSize: 13, fontWeight: 600, color: '#e8e8f0', minWidth: 70, textAlign: 'right' }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#e8e8f0', minWidth: 70, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
                       {Mn.fmt(row.amount)}
                     </span>
                     <button onClick={() => startEdit(row)} data-testid={`edit-${row.month}`} style={{ background: 'none', border: 'none', color: '#3c3c54', fontSize: 13, cursor: 'pointer', padding: '2px 4px' }} title="Editar">✏️</button>
