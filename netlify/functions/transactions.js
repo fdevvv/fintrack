@@ -158,8 +158,19 @@ export async function handler(event) {
       }
 
       const withUser = transactions.map((t) => ({
-        ...t,
-        user_id: user.id,
+        user_id:              user.id,
+        category_id:          t.category_id          ?? null,
+        amount_cents:         t.amount_cents,
+        currency:             t.currency             || 'ARS',
+        type:                 t.type,
+        payment_method:       t.payment_method       || 'cash',
+        description:          t.description          ?? null,
+        item_name:            t.item_name            ?? null,
+        transaction_date:     t.transaction_date,
+        section:              t.section              ?? null,
+        installment_current:  t.installment_current  ?? null,
+        installment_total:    t.installment_total     ?? null,
+        installment_group_id: t.installment_group_id ?? null,
       }));
 
       const { data, error } = await supabase

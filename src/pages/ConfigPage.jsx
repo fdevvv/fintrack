@@ -26,7 +26,7 @@ export function ConfigPage() {
     const toMigrate = legacyKeys.filter(k => !savedKeys.has(k));
     toMigrate.forEach(k => {
       const label = SECTIONS[k]?.label || k;
-      addSection(k, label).catch(() => {});
+      addSection(k, label, ['VISA','MASTERCARD'].includes(k)).catch(() => {});
     });
   }, [transactions, userSections]);
 

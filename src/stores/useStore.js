@@ -136,8 +136,8 @@ export const useStore = create((set, get) => ({
   },
 
   // Sections
-  addSection: async (key, label) => {
-    const sec = await sectionsService.create(key, label);
+  addSection: async (key, label, isCard = false) => {
+    const sec = await sectionsService.create(key, label, isCard);
     set(s => ({ userSections: [...s.userSections, sec] }));
     return sec;
   },

@@ -85,7 +85,7 @@ export default function App() {
       case 'imp': return <ImportPage />;
       case 'dolar': return <DolarPage />;
       case 'cfg': return <ConfigPage />;
-      case 'admin': return <AdminPage />;
+      case 'admin': return profile?.email === 'foschi246@gmail.com' ? <AdminPage /> : <DashPage />;
       default: return <DashPage />;
     }
   };
