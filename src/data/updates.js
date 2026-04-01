@@ -7,7 +7,7 @@
 export const UPDATES = [
   {
     id: 'update-20260401-1',
-    date: '1 de abril de 2026 · 14:00 (ARG)',
+    date: '1 de abril de 2026 · 00:15 (ARG)',
     title: 'Panel rediseñado, metas de ahorro, gráficos y nuevas herramientas',
     items: [
       'Panel — Chips rápidos: en la parte superior del panel ahora aparecen tres chips con cuánto gastaste hoy, cuánto gastaste esta semana y cuál es tu promedio diario del mes.',
