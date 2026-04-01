@@ -3,11 +3,26 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import { VitePWA } from 'vite-plugin-pwa';
 
+// Plugin que genera dist/version.json con timestamp del build
+function versionPlugin() {
+  return {
+    name: 'version-plugin',
+    generateBundle() {
+      this.emitFile({
+        type: 'asset',
+        fileName: 'version.json',
+        source: JSON.stringify({ v: Date.now() }),
+      });
+    },
+  };
+}
+
 export default defineConfig({
   plugins: [
     react(),
+    versionPlugin(),
     VitePWA({
-      registerType: 'prompt',
+      registerType: 'autoUpdate',
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,woff2}'],
         runtimeCaching: [

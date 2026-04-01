@@ -1,9 +1,11 @@
-import { useRegisterSW } from 'virtual:pwa-register/react';
+import { useState } from 'react';
+import { useUpdateCheck } from '@/hooks/useUpdateCheck';
 
 export function UpdatePrompt() {
-  const { needRefresh: [needRefresh, setNeedRefresh], updateServiceWorker } = useRegisterSW();
+  const hasUpdate = useUpdateCheck();
+  const [dismissed, setDismissed] = useState(false);
 
-  if (!needRefresh) return null;
+  if (!hasUpdate || dismissed) return null;
 
   return (
     <div style={{
@@ -16,13 +18,13 @@ export function UpdatePrompt() {
       <span style={{ fontSize: 18 }}>🚀</span>
       <span style={{ fontSize: 13, fontWeight: 600, color: '#a8a0f8' }}>Nueva versión disponible</span>
       <button
-        onClick={() => updateServiceWorker(true)}
+        onClick={() => window.location.reload()}
         style={{ background: '#7c6cf0', border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 700, padding: '5px 12px', cursor: 'pointer' }}
       >
         Actualizar
       </button>
       <button
-        onClick={() => setNeedRefresh(false)}
+        onClick={() => setDismissed(true)}
         style={{ background: 'none', border: 'none', color: '#5c5c72', fontSize: 16, cursor: 'pointer', padding: '2px' }}
       >
         ✕

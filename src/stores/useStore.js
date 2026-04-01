@@ -68,7 +68,6 @@ export const useStore = create((set, get) => ({
       // Carga separada — no bloquea si la view aún no fue aplicada en Supabase
       try {
         const balanceRows = await monthlyBalanceService.list(activeYear);
-        console.log('[monthly_balance] rows:', balanceRows);
         set({ monthlyBalance: balanceRows });
       } catch (balanceErr) {
         console.error('[monthly_balance] error:', balanceErr);
