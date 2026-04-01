@@ -54,8 +54,8 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (session) loadAll();
-  }, [session, year]);
+    if (session?.user?.id) loadAll();
+  }, [session?.user?.id, year]);
 
   // Banner de nuevas actualizaciones al entrar a la app
   useEffect(() => {
