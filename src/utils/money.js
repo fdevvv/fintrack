@@ -3,6 +3,21 @@
  * All amounts stored as integer (not cents for this project,
  * matching control-g convention where $1,000 = 1000).
  */
+/**
+ * Parsea un monto en formato argentino: punto = miles, coma = decimal.
+ * Ej: "21.375,53" → 21375.53 | "21.375" → 21375 | "21375,53" → 21375.53
+ */
+export function parseARS(str) {
+  if (str == null || str === '') return NaN;
+  const s = String(str).trim();
+  if (!s) return NaN;
+  const hasComma = s.includes(',');
+  const clean = hasComma
+    ? s.replace(/\./g, '').replace(',', '.')
+    : s.replace(/\./g, '');
+  return parseFloat(clean);
+}
+
 export const Mn = {
   fmt(n) {
     if (n == null || isNaN(n)) return '$0';

@@ -6,11 +6,11 @@ export function ST({ children, color = '#7c6cf0' }) {
   return <h2 style={{ fontSize:16,fontWeight:800,color:'#e8e8f0',margin:'24px 0 16px',paddingLeft:12,borderLeft:`3px solid ${color}` }}>{children}</h2>;
 }
 
-export function Inp({ label, value, onChange, placeholder, type = 'text', style: extra }) {
+export function Inp({ label, value, onChange, placeholder, type = 'text', inputMode: im, style: extra }) {
   return (
     <div style={{ marginBottom:12, ...extra }}>
       {label && <label style={{ display:'block',fontSize:11,fontWeight:600,color:'#6c7280',marginBottom:5 }}>{label}</label>}
-      <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} inputMode={type==='number'?'numeric':undefined} style={inputStyle} />
+      <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} inputMode={im ?? (type==='number'?'numeric':undefined)} style={inputStyle} />
     </div>
   );
 }

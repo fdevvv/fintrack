@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useStore } from '@/stores/useStore';
 import { useUiStore } from '@/stores/uiStore';
 import { MONTHS_FULL, SECTIONS, RUBRO_EMOJI } from '@/utils/constants';
-import { Mn } from '@/utils/money';
+import { Mn, parseARS } from '@/utils/money';
 import { useAddTransaction } from '@/hooks/transactions/useAddTransaction';
 import { useSyncUsd } from '@/hooks/transactions/useSyncUsd';
 import { useSavingsGoals } from '@/hooks/savings/useSavingsGoals';
@@ -72,7 +72,7 @@ export function AddPage() {
 
 
   const addG = async () => {
-    if (!item || !rub || !monto || Number(monto) <= 0) { showToast('Completá todos los campos', true); return; }
+    if (!item || !rub || !monto || !(parseARS(monto) > 0)) { showToast('Completá todos los campos', true); return; }
     if (destino === 'tarjeta' && !sec) { showToast('Seleccioná la tarjeta', true); return; }
     try {
       const catObj = expenseCats.find(c => c.name === rub);
@@ -80,7 +80,7 @@ export function AddPage() {
         item_name: item,
         category_id: catObj?.id || null,
         section: sec,
-        amount: monto,
+        amount: parseARS(monto),
         cuotas,
         start_month: Number(mes),
         currency: moneda,
@@ -161,14 +161,19 @@ export function AddPage() {
       )}
       {destino === 'tarjeta' ? (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
-          <Inp label="Monto" value={monto} onChange={sM} placeholder="0" type="number" />
+          <Inp label="Monto" value={monto} onChange={sM} placeholder="Ej: 150.000" type="text" inputMode="decimal" />
           <Sel label="Moneda" value={moneda} onChange={setMoneda} options={[{ v: 'ARS', l: 'ARS $' }, { v: 'USD', l: 'USD' }]} />
           <Inp label="Cuotas" value={cuotas} onChange={sC} placeholder="1" type="number" />
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          <Inp label="Monto" value={monto} onChange={sM} placeholder="0" type="number" />
+          <Inp label="Monto" value={monto} onChange={sM} placeholder="Ej: 150.000" type="text" inputMode="decimal" />
           <Sel label="Moneda" value={moneda} onChange={setMoneda} options={[{ v: 'ARS', l: 'ARS $' }, { v: 'USD', l: 'USD' }]} />
+        </div>
+      )}
+      {monto && !isNaN(parseARS(monto)) && (
+        <div style={{ fontSize:11, color:'#2dd4a8', marginTop:-8, marginBottom:8, paddingLeft:2 }}>
+          = {Mn.fmt(parseARS(monto))}
         </div>
       )}
       <Sel label="Mes" value={mes} onChange={sMes} options={MONTHS_FULL.map((m, i) => ({ v: String(i + 1), l: m }))} />
