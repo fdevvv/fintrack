@@ -38,15 +38,17 @@ export function useAddTransaction() {
       const installment_total = isManual ? 1 : (Number(cuotas) || 1);
       const groupId = crypto.randomUUID();
 
+      const amountPerInstallment = Math.round(finalMonto / installment_total);
       const rows = [];
       for (let i = 0; i < installment_total; i++) {
         const monthIdx = (start_month - 1) + i;
         if (monthIdx < 0) continue;
-        if (monthIdx >= 12) break;
-        const txDate = `${year}-${String(monthIdx + 1).padStart(2, '0')}-15`;
+        const txYear = monthIdx >= 12 ? year + 1 : year;
+        const txMonth = (monthIdx % 12) + 1;
+        const txDate = `${txYear}-${String(txMonth).padStart(2, '0')}-15`;
         rows.push({
           category_id,
-          amount_cents: finalMonto,
+          amount_cents: amountPerInstallment,
           currency: 'ARS',
           type: 'expense',
           payment_method: isManual ? payment_method : 'credit_card',
@@ -54,7 +56,7 @@ export function useAddTransaction() {
           description: item_name.toUpperCase(),
           item_name: item_name.toUpperCase(),
           transaction_date: txDate,
-          year,
+          year: txYear,
           installment_current: i + 1,
           installment_total,
           installment_group_id: groupId,
