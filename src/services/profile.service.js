@@ -19,6 +19,12 @@ export const profileService = {
     return data;
   },
 
+  async markOnboardingComplete() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return;
+    await supabase.from('profiles').update({ onboarding_completed: true }).eq('id', session.user.id);
+  },
+
   async touch() {
     await supabase.rpc('update_last_seen');
   },

@@ -8,6 +8,7 @@ import { AuthPage } from './components/auth/AuthPage';
 import { Toast } from './components/ui/Shared';
 import { NotificationsPanel } from './components/ui/NotificationBell';
 import { UpdatePrompt } from './components/ui/UpdatePrompt';
+import { OnboardingGuide } from './components/onboarding/OnboardingGuide';
 import { DashPage } from './pages/DashPage';
 import { AddPage } from './pages/AddPage';
 import { ListPage } from './pages/ListPage';
@@ -37,6 +38,7 @@ export default function App() {
   const { page, setPage, year, years, setYear, loadAll, profile } = useStore();
   const { syncing, toast, clearToast, notifHasNew, openNotif } = useUiStore();
   const [showBanner, setShowBanner] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -57,6 +59,12 @@ export default function App() {
     if (session?.user?.id) loadAll();
   }, [session?.user?.id, year]);
 
+  // Mostrar guía de onboarding si el usuario no la completó todavía
+  useEffect(() => {
+    if (!profile) return;
+    if (!profile.onboarding_completed) setShowGuide(true);
+  }, [profile?.id]);
+
   // Banner de nuevas actualizaciones al entrar a la app
   useEffect(() => {
     if (!session || !notifHasNew) return;
@@ -67,9 +75,31 @@ export default function App() {
   if (authLoading) {
     return (
       <div style={{ minHeight:'100vh',background:'#0a0a12',display:'flex',alignItems:'center',justifyContent:'center' }}>
-        <div style={{ textAlign:'center' }}>
-          <div className="ft-spinner" />
-          <div style={{ fontSize:13,color:'#5c5c72',marginTop:12 }}>Cargando...</div>
+        <style>{`
+          @keyframes ftBarSlide {
+            0%   { width: 0%; opacity: 0.7; }
+            60%  { width: 80%; opacity: 1; }
+            100% { width: 100%; opacity: 0.6; }
+          }
+          @keyframes ftLogoPulse {
+            0%, 100% { opacity: 0.85; transform: scale(1); }
+            50%       { opacity: 1;    transform: scale(1.04); }
+          }
+          .ft-splash-logo { animation: ftLogoPulse 2s ease-in-out infinite; }
+          .ft-splash-bar  { animation: ftBarSlide 1.4s cubic-bezier(.4,0,.2,1) infinite; }
+        `}</style>
+        <div style={{ textAlign:'center', display:'flex', flexDirection:'column', alignItems:'center', gap:20 }}>
+          <div className="ft-splash-logo" style={{ width:56, height:56, borderRadius:16, background:'linear-gradient(135deg,#7c6cf0 0%,#2dd4a8 100%)', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 0 32px rgba(124,108,240,0.35)' }}>
+            <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
+              <rect x="3" y="18" width="6" height="9" rx="2" fill="white" opacity="0.9"/>
+              <rect x="12" y="11" width="6" height="16" rx="2" fill="white"/>
+              <rect x="21" y="4" width="6" height="23" rx="2" fill="white" opacity="0.9"/>
+            </svg>
+          </div>
+          <div style={{ fontFamily:"'DM Sans',system-ui,sans-serif", fontSize:20, fontWeight:700, color:'#fff', letterSpacing:'-0.3px' }}>FinTrack</div>
+          <div style={{ width:160, height:3, background:'rgba(255,255,255,0.06)', borderRadius:99, overflow:'hidden' }}>
+            <div className="ft-splash-bar" style={{ height:'100%', background:'linear-gradient(90deg,#7c6cf0,#2dd4a8)', borderRadius:99 }} />
+          </div>
         </div>
       </div>
     );
@@ -99,6 +129,8 @@ export default function App() {
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
         .ft-spinner { width:32px;height:32px;border:3px solid rgba(124,108,240,0.2);border-top-color:#7c6cf0;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto; }
+        @keyframes ftPageIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+        .ft-page-enter { animation: ftPageIn 0.18s ease-out both; }
 
         /* Mobile first */
         .ft-app { min-height:100vh; background:#0a0a12; font-family:'DM Sans',system-ui,sans-serif; }
@@ -131,7 +163,9 @@ export default function App() {
           {/* Mobile header */}
           <TopBar year={year} years={years} setYear={setYear} syncing={syncing} onSignOut={signOut} onNav={handleNav} />
           <div className="ft-page">
-            {renderPage()}
+            <div key={page + location.pathname} className="ft-page-enter">
+              {renderPage()}
+            </div>
           </div>
         </div>
 
@@ -150,6 +184,7 @@ export default function App() {
 
         <NotificationsPanel />
         <UpdatePrompt />
+        {showGuide && <OnboardingGuide onClose={() => setShowGuide(false)} />}
       </div>
     </>
   );
