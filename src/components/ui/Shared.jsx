@@ -73,6 +73,31 @@ export function ConfirmModal({ show, title, message, onConfirm, onCancel }) {
   );
 }
 
+export function InstallmentDeleteModal({ show, item, onDeleteOne, onDeleteAll, onCancel }) {
+  if (!show) return null;
+  return (
+    <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.7)',backdropFilter:'blur(4px)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10000,padding:20 }} onClick={onCancel}>
+      <div style={{ background:'#14141e',borderRadius:16,padding:24,maxWidth:360,width:'100%',border:'1px solid rgba(255,255,255,0.08)' }} onClick={e => e.stopPropagation()}>
+        <div style={{ fontSize:16,fontWeight:700,color:'#e8e8f0',marginBottom:6 }}>Eliminar cuota</div>
+        <div style={{ fontSize:13,color:'#8888a0',lineHeight:1.5,marginBottom:20 }}>
+          <span style={{ color:'#e8e8f0',fontWeight:600 }}>{item?.item_name}</span> tiene {item?.installment_total} cuotas. ¿Qué querés eliminar?
+        </div>
+        <div style={{ display:'flex',flexDirection:'column',gap:8 }}>
+          <button onClick={onDeleteOne} style={{ padding:'11px 16px',borderRadius:10,border:'1px solid rgba(240,96,112,0.3)',background:'rgba(240,96,112,0.08)',color:'#f06070',fontSize:13,fontWeight:600,cursor:'pointer',textAlign:'left' }}>
+            Solo la cuota {item?.installment_current}/{item?.installment_total}
+            <span style={{ display:'block',fontSize:11,color:'#8888a0',fontWeight:400,marginTop:2 }}>Las otras cuotas se mantienen</span>
+          </button>
+          <button onClick={onDeleteAll} style={{ padding:'11px 16px',borderRadius:10,border:'none',background:'#f06070',color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer',textAlign:'left' }}>
+            Eliminar todas las cuotas
+            <span style={{ display:'block',fontSize:11,color:'rgba(255,255,255,0.7)',fontWeight:400,marginTop:2 }}>Se borran las {item?.installment_total} cuotas</span>
+          </button>
+          <button onClick={onCancel} style={{ padding:10,borderRadius:10,border:'1px solid rgba(255,255,255,0.08)',background:'transparent',color:'#8888a0',fontSize:13,fontWeight:600,cursor:'pointer' }}>Cancelar</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ItemIcon({ item }) {
   const catName = item.categories?.name || item.category_name || '';
   if (catName === 'Suscripciones') {

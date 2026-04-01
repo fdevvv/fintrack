@@ -6,6 +6,20 @@
  */
 export const UPDATES = [
   {
+    id: 'update-20260401-2',
+    date: '1 de abril de 2026 · 15:36 (ARG)',
+    title: 'Perfil, cuotas corregidas, nuevo favicon y mejoras generales',
+    items: [
+      'Mi Perfil: nueva sección donde podés ver tu foto, nombre y datos de tu cuenta. Desde ahí podés cambiar tu foto, editar tu nombre y cambiar tu contraseña.',
+      'El monto al agregar un gasto ahora acepta formato argentino: podés escribir 21.375,53 con punto como separador de miles y coma como decimal.',
+      'Cuotas — corrección: el monto ahora se divide correctamente entre las cuotas. Antes se guardaba el total en cada cuota en lugar del valor por cuota.',
+      'Cuotas — año siguiente: si las cuotas superan diciembre se registran en los meses correspondientes del año siguiente.',
+      'Al eliminar un gasto en cuotas ahora aparece un menú que te pregunta si querés borrar solo esa cuota o todas.',
+      'Al crear un nuevo rubro podés elegir el ícono directamente desde la pantalla Agregar, sin tener que ir a Configuración.',
+      'Actualización automática: cuando haya una nueva versión de la app vas a ver un aviso con un botón para actualizar sin perder lo que estabas haciendo.',
+    ],
+  },
+  {
     id: 'update-20260401-1',
     date: '1 de abril de 2026 · 00:15 (ARG)',
     title: 'Panel rediseñado, metas de ahorro, gráficos y nuevas herramientas',

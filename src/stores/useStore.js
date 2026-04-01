@@ -109,8 +109,8 @@ export const useStore = create((set, get) => ({
   },
 
   // Categories
-  addCategory: async (name, type) => {
-    const cat = await categoriesService.create(name, type);
+  addCategory: async (name, type, icon) => {
+    const cat = await categoriesService.create(name, type, icon);
     set(s => ({ categories: [...s.categories, cat] }));
     return cat;
   },

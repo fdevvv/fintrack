@@ -6,7 +6,7 @@ import { Mn, parseARS } from '@/utils/money';
 import { useAddTransaction } from '@/hooks/transactions/useAddTransaction';
 import { useSyncUsd } from '@/hooks/transactions/useSyncUsd';
 import { useSavingsGoals } from '@/hooks/savings/useSavingsGoals';
-import { ST, Inp, Sel, Btn, Divider } from '@/components/ui/Shared';
+import { ST, Inp, Sel, Btn, Divider, EmojiPicker } from '@/components/ui/Shared';
 
 export function AddPage() {
   const { year, years, categories, budgets, transactions, userSections, setIncome, addCategory, createYear, setBudget, addSection } = useStore();
@@ -27,6 +27,7 @@ export function AddPage() {
   const [ingM, sIM] = useState('');
   const [ingMes, sIMes] = useState(String(new Date().getMonth() + 1));
   const [nRub, sNR] = useState('');
+  const [nRubIcon, sNRI] = useState('📎');
   const [budRub, setBudRub] = useState('');
   const [budMonto, setBudMonto] = useState('');
   const [newSecName, setNewSecName] = useState('');
@@ -150,13 +151,13 @@ export function AddPage() {
                 </div>
               )}
             </div>
-            <Sel label="Rubro" value={rub} onChange={sR} options={[{ v:'',l:'Seleccionar...' },...expenseCats.map(c => ({ v:c.name,l:`${RUBRO_EMOJI[c.name]||'📎'} ${c.name}` }))]} />
+            <Sel label="Rubro" value={rub} onChange={sR} options={[{ v:'',l:'Seleccionar...' },...expenseCats.map(c => ({ v:c.name,l:`${c.icon||RUBRO_EMOJI[c.name]||'📎'} ${c.name}` }))]} />
           </div>
         </div>
       ) : (
         <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:10 }}>
           <Sel label="Método pago" value={payMethod} onChange={setPayMethod} options={[{ v:'cash',l:'Efectivo' },{ v:'qr_debit',l:'QR' },{ v:'debit_card',l:'Tarjeta débito' },{ v:'transfer',l:'Transferencia' }]} />
-          <Sel label="Rubro" value={rub} onChange={sR} options={[{ v:'',l:'Seleccionar...' },...expenseCats.map(c => ({ v:c.name,l:`${RUBRO_EMOJI[c.name]||'📎'} ${c.name}` }))]} />
+          <Sel label="Rubro" value={rub} onChange={sR} options={[{ v:'',l:'Seleccionar...' },...expenseCats.map(c => ({ v:c.name,l:`${c.icon||RUBRO_EMOJI[c.name]||'📎'} ${c.name}` }))]} />
         </div>
       )}
       {destino === 'tarjeta' ? (
@@ -179,6 +180,7 @@ export function AddPage() {
       <Sel label="Mes" value={mes} onChange={sMes} options={MONTHS_FULL.map((m, i) => ({ v: String(i + 1), l: m }))} />
       <Btn color={destino==='manual'?'#2dd4a8':'#7c6cf0'} onClick={addG} disabled={busy}>{busy ? 'Guardando...' : moneda === 'USD' ? 'Agregar (convertir a ARS)' : destino==='manual'?'Agregar a Gastos del Mes':'Agregar a Detalle'}</Btn>
       <Btn color="rgba(255,255,255,0.08)" onClick={syncUSD} disabled={busy} style={{ color: '#f0a848' }}>🔄 Sincronizar gastos USD</Btn>
+      <p style={{ fontSize:11,color:'#6c7280',marginTop:-8,marginBottom:14,lineHeight:1.5 }}>Actualiza el valor en pesos de todos tus gastos cargados en dólares usando el dólar oficial actual.</p>
 
       <Divider />
       <ST color="#2dd4a8">Actualizar Ingreso</ST>
@@ -224,8 +226,12 @@ export function AddPage() {
       <ST color="#60a8f0">Nuevo Rubro</ST>
       <p style={{ fontSize:11,color:'#6c7280',marginBottom:14,lineHeight:1.5 }}>Creá una categoría de gasto personalizada, como Farmacia, Mascota o Gimnasio.</p>
       <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
+        <div style={{ marginBottom: 12 }}>
+          <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6c7280', marginBottom: 5 }}>Icono</label>
+          <EmojiPicker value={nRubIcon} onChange={sNRI} />
+        </div>
         <div style={{ flex: 1 }}><Inp label="Nombre" value={nRub} onChange={sNR} placeholder="Ej: Farmacia" /></div>
-        <button onClick={async () => { if (!nRub.trim()) return; await addCategory(nRub.trim(), 'expense'); showToast(`✓ "${nRub}" agregado`); sNR(''); }} style={{ padding: '11px 20px', borderRadius: 10, border: 'none', background: '#60a8f0', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', marginBottom: 12 }}>Agregar</button>
+        <button onClick={async () => { if (!nRub.trim()) return; await addCategory(nRub.trim(), 'expense', nRubIcon); showToast(`✓ "${nRub}" agregado`); sNR(''); sNRI('📎'); }} style={{ padding: '11px 20px', borderRadius: 10, border: 'none', background: '#60a8f0', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', marginBottom: 12 }}>Agregar</button>
       </div>
 
 
@@ -233,13 +239,13 @@ export function AddPage() {
       <ST color="#e070b0">Presupuestos</ST>
       <p style={{ fontSize:11,color:'#6c7280',marginBottom:14,lineHeight:1.5 }}>Fijá un límite de gasto mensual por rubro. Te avisamos en el panel cuando estás cerca de superarlo.</p>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 8 }}>
-        <Sel label="Rubro" value={budRub} onChange={setBudRub} options={[{ v: '', l: 'Seleccionar...' }, ...expenseCats.map(c => ({ v: c.name, l: `${RUBRO_EMOJI[c.name] || '📎'} ${c.name}` }))]} />
+        <Sel label="Rubro" value={budRub} onChange={setBudRub} options={[{ v: '', l: 'Seleccionar...' }, ...expenseCats.map(c => ({ v: c.name, l: `${c.icon || RUBRO_EMOJI[c.name] || '📎'} ${c.name}` }))]} />
         <Inp label="Límite ($)" value={budMonto} onChange={setBudMonto} placeholder="0" type="number" />
       </div>
       <Btn color="#e070b0" onClick={() => { if (!budRub || !budMonto) { showToast('Completá', true); return; } setBudget(budRub, Math.round(Number(budMonto))); showToast('✓ Presupuesto guardado'); setBudRub(''); setBudMonto(''); }}>Guardar Presupuesto</Btn>
       {Object.entries(budgets).filter(([, v]) => v > 0).map(([rubro, monto]) => (
         <div key={rubro} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-          <span style={{ fontSize: 12, color: '#e8e8f0' }}>{RUBRO_EMOJI[rubro] || '📎'} {rubro} — {Mn.fmt(monto)}/mes</span>
+          <span style={{ fontSize: 12, color: '#e8e8f0' }}>{expenseCats.find(c => c.name === rubro)?.icon || RUBRO_EMOJI[rubro] || '📎'} {rubro} — {Mn.fmt(monto)}/mes</span>
           <button onClick={() => setBudget(rubro, 0)} style={{ background: 'none', border: 'none', color: '#f06070', fontSize: 14, cursor: 'pointer' }}>✕</button>
         </div>
       ))}

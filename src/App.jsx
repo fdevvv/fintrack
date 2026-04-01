@@ -7,6 +7,7 @@ import { Sidebar, MobileNav, TopBar } from './components/layout/Layout';
 import { AuthPage } from './components/auth/AuthPage';
 import { Toast } from './components/ui/Shared';
 import { NotificationsPanel } from './components/ui/NotificationBell';
+import { UpdatePrompt } from './components/ui/UpdatePrompt';
 import { DashPage } from './pages/DashPage';
 import { AddPage } from './pages/AddPage';
 import { ListPage } from './pages/ListPage';
@@ -16,6 +17,7 @@ import { DolarPage } from './pages/DolarPage';
 import { ConfigPage } from './pages/ConfigPage';
 import { AdminPage } from './pages/AdminPage';
 import { MesDetailPage } from './pages/MesDetailPage';
+import { ProfilePage } from './pages/ProfilePage';
 
 const PAGE_ROUTES = {
   dash:   '/panel',
@@ -25,6 +27,7 @@ const PAGE_ROUTES = {
   imp:    '/importar',
   dolar:  '/dolar',
   cfg:    '/configuracion',
+  perfil: '/perfil',
   admin:  '/admin',
 };
 const ROUTE_PAGES = Object.fromEntries(Object.entries(PAGE_ROUTES).map(([k, v]) => [v, k]));
@@ -85,6 +88,7 @@ export default function App() {
       case 'imp': return <ImportPage />;
       case 'dolar': return <DolarPage />;
       case 'cfg': return <ConfigPage />;
+      case 'perfil': return <ProfilePage />;
       case 'admin': return profile?.email === 'foschi246@gmail.com' ? <AdminPage /> : <DashPage />;
       default: return <DashPage />;
     }
@@ -125,7 +129,7 @@ export default function App() {
 
         <div className="ft-main">
           {/* Mobile header */}
-          <TopBar year={year} years={years} setYear={setYear} syncing={syncing} onSignOut={signOut} />
+          <TopBar year={year} years={years} setYear={setYear} syncing={syncing} onSignOut={signOut} onNav={handleNav} />
           <div className="ft-page">
             {renderPage()}
           </div>
@@ -145,6 +149,7 @@ export default function App() {
         )}
 
         <NotificationsPanel />
+        <UpdatePrompt />
       </div>
     </>
   );

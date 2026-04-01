@@ -8,7 +8,7 @@ import { Mn } from '@/utils/money';
 import { exportToExcel } from '@/services/export.service';
 import { useTransactions } from '@/hooks/transactions/useTransactions';
 import { useDeleteTransaction } from '@/hooks/transactions/useDeleteTransaction';
-import { ST, MonthBar, ItemIcon, SectionTag, CuotaTag, ConfirmModal } from '@/components/ui/Shared';
+import { ST, MonthBar, ItemIcon, SectionTag, CuotaTag, ConfirmModal, InstallmentDeleteModal } from '@/components/ui/Shared';
 
 export function ListPage() {
   const { month: storeMonth, setMonth, income, year, renameTransactionGroup } = useStore();
@@ -56,9 +56,16 @@ export function ListPage() {
   const { filtered, grouped, total, rubrosInData, secsInData } = useTransactions({ month, search, filterRub, filterSec });
   const { remove } = useDeleteTransaction();
 
-  const handleDelete = async () => {
+  const handleDeleteOne = async () => {
     if (!delTarget) return;
-    try { await remove(delTarget.id, delTarget.installment_group_id); showToast('✓ Eliminado'); }
+    try { await remove(delTarget.id); showToast('✓ Cuota eliminada'); }
+    catch { showToast('Error', true); }
+    setDelTarget(null);
+  };
+
+  const handleDeleteAll = async () => {
+    if (!delTarget) return;
+    try { await remove(delTarget.id, delTarget.installment_group_id); showToast('✓ Todas las cuotas eliminadas'); }
     catch { showToast('Error', true); }
     setDelTarget(null);
   };
@@ -143,7 +150,8 @@ export function ListPage() {
         </button>
       )}
 
-      <ConfirmModal show={!!delTarget} title="Eliminar gasto" message={delTarget?`¿Eliminar "${delTarget.item_name}"?${(delTarget.installment_total||1)>1?' Se eliminan todas las cuotas.':''}`:''} onConfirm={handleDelete} onCancel={()=>setDelTarget(null)} />
+      <InstallmentDeleteModal show={!!delTarget && (delTarget.installment_total||1) > 1} item={delTarget} onDeleteOne={handleDeleteOne} onDeleteAll={handleDeleteAll} onCancel={() => setDelTarget(null)} />
+      <ConfirmModal show={!!delTarget && (delTarget.installment_total||1) <= 1} title="Eliminar gasto" message={delTarget ? `¿Eliminar "${delTarget.item_name}"?` : ''} onConfirm={handleDeleteOne} onCancel={() => setDelTarget(null)} />
       <div style={{ height:80 }} />
     </div>
   );
