@@ -6,6 +6,16 @@
 [functions]
   node_bundler = "esbuild"
 
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/workbox-*.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
