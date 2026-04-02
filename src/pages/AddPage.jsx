@@ -145,9 +145,9 @@ export function AddPage() {
                   <input value={newSecName} onChange={e => setNewSecName(e.target.value)}
                     placeholder="Ej: Naranja X" autoFocus
                     onKeyDown={e => e.key==='Enter' && handleCreateSection()}
-                    style={{ flex:1,padding:'7px 10px',borderRadius:8,border:'1px solid rgba(124,108,240,0.3)',background:'rgba(255,255,255,0.04)',color:'#e8e8f0',fontSize:16,outline:'none' }}
+                    style={{ flex:1,padding:'9px 12px',borderRadius:8,border:'1px solid rgba(124,108,240,0.3)',background:'rgba(255,255,255,0.04)',color:'#e8e8f0',fontSize:16,outline:'none' }}
                   />
-                  <button type="button" onClick={handleCreateSection} style={{ padding:'7px 12px',borderRadius:8,border:'none',background:'#7c6cf0',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer' }}>Crear</button>
+                  <button type="button" onClick={handleCreateSection} style={{ height:40,padding:'0 12px',borderRadius:8,border:'none',background:'#7c6cf0',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer' }}>Crear</button>
                 </div>
               )}
             </div>
@@ -186,10 +186,15 @@ export function AddPage() {
       <ST color="#2dd4a8">Actualizar Ingreso</ST>
       <p style={{ fontSize:11,color:'#6c7280',marginBottom:14,lineHeight:1.5 }}>Ingresá tu sueldo o ingreso neto de cada mes. Se usa para calcular el balance mensual y cuánto ahorrás.</p>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-        <Inp label="Monto neto ($)" value={ingM} onChange={sIM} placeholder="0" type="number" />
+        <Inp label="Monto neto ($)" value={ingM} onChange={sIM} placeholder="Ej: 350.000" type="text" inputMode="decimal" />
         <Sel label="Mes" value={ingMes} onChange={sIMes} options={MONTHS_FULL.map((m, i) => ({ v: String(i + 1), l: m }))} />
       </div>
-      <Btn color="#22c55e" onClick={async () => { if (!ingM || Number(ingM) <= 0) { showToast('Monto inválido', true); return; } await setIncome(Number(ingMes), Number(ingM)); showToast('✓ Ingreso actualizado'); sIM(''); }} disabled={busy}>Actualizar Ingreso</Btn>
+      {ingM && !isNaN(parseARS(ingM)) && (
+        <div style={{ fontSize:11, color:'#22c55e', marginTop:-8, marginBottom:8, paddingLeft:2 }}>
+          = {Mn.fmt(parseARS(ingM))}
+        </div>
+      )}
+      <Btn color="#22c55e" onClick={async () => { if (!(parseARS(ingM) > 0)) { showToast('Monto inválido', true); return; } await setIncome(Number(ingMes), Math.round(parseARS(ingM))); showToast('✓ Ingreso actualizado'); sIM(''); }} disabled={busy}>Actualizar Ingreso</Btn>
       <Sel label="Repetir gastos de" value={repeatMes} onChange={setRepeatMes} options={MONTHS_FULL.map((m, i) => ({ v: String(i), l: m }))} />
       <Btn color="rgba(255,255,255,0.06)" disabled={busy||repeating} style={{ color:'#a8a0f8' }} onClick={async () => {
         const mo = Number(repeatMes);
@@ -225,13 +230,16 @@ export function AddPage() {
       <Divider />
       <ST color="#60a8f0">Nuevo Rubro</ST>
       <p style={{ fontSize:11,color:'#6c7280',marginBottom:14,lineHeight:1.5 }}>Creá una categoría de gasto personalizada, como Farmacia, Mascota o Gimnasio.</p>
-      <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
-        <div style={{ marginBottom: 12 }}>
+      <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+        <div>
           <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6c7280', marginBottom: 5 }}>Icono</label>
           <EmojiPicker value={nRubIcon} onChange={sNRI} />
         </div>
-        <div style={{ flex: 1 }}><Inp label="Nombre" value={nRub} onChange={sNR} placeholder="Ej: Farmacia" /></div>
-        <button onClick={async () => { if (!nRub.trim()) return; await addCategory(nRub.trim(), 'expense', nRubIcon); showToast(`✓ "${nRub}" agregado`); sNR(''); sNRI('📎'); }} style={{ padding: '11px 20px', borderRadius: 10, border: 'none', background: '#60a8f0', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', marginBottom: 12 }}>Agregar</button>
+        <Inp label="Nombre" value={nRub} onChange={sNR} placeholder="Ej: Farmacia" style={{ flex: 1, marginBottom: 0 }} />
+        <div style={{ marginBottom: 12 }}>
+          <label style={{ display: 'block', fontSize: 11, marginBottom: 5, visibility: 'hidden' }}>_</label>
+          <button onClick={async () => { if (!nRub.trim()) return; await addCategory(nRub.trim(), 'expense', nRubIcon); showToast(`✓ "${nRub}" agregado`); sNR(''); sNRI('📎'); }} style={{ height: 40, padding: '0 20px', borderRadius: 10, border: 'none', background: '#60a8f0', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Agregar</button>
+        </div>
       </div>
 
 
@@ -308,14 +316,14 @@ export function AddPage() {
                       setAddingTo(null); setAddAmt('');
                     }
                   }}
-                  style={{ flex:1,padding:'7px 10px',borderRadius:8,border:'1px solid rgba(74,222,128,0.3)',background:'rgba(255,255,255,0.04)',color:'#e8e8f0',fontSize:16,outline:'none' }}
+                  style={{ flex:1,padding:'9px 12px',borderRadius:8,border:'1px solid rgba(74,222,128,0.3)',background:'rgba(255,255,255,0.04)',color:'#e8e8f0',fontSize:16,outline:'none' }}
                 />
                 <button type="button" onClick={() => {
                   if (!addAmt || Number(addAmt) <= 0) return;
                   updateSaved(g.id, g.saved_amount + Number(addAmt));
                   showToast(`✓ +${Mn.fmt(Number(addAmt))} a "${g.name}"`);
                   setAddingTo(null); setAddAmt('');
-                }} style={{ padding:'7px 14px',borderRadius:8,border:'none',background:'#4ade80',color:'#0a0a12',fontSize:12,fontWeight:700,cursor:'pointer' }}>Agregar</button>
+                }} style={{ height:40,padding:'0 14px',borderRadius:8,border:'none',background:'#4ade80',color:'#0a0a12',fontSize:12,fontWeight:700,cursor:'pointer' }}>Agregar</button>
               </div>
             )}
           </div>

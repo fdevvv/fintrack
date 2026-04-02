@@ -9,7 +9,7 @@ export function ST({ children, color = '#7c6cf0' }) {
 export function Inp({ label, value, onChange, placeholder, type = 'text', inputMode: im, style: extra }) {
   return (
     <div style={{ marginBottom:12, ...extra }}>
-      {label && <label style={{ display:'block',fontSize:11,fontWeight:600,color:'#6c7280',marginBottom:5 }}>{label}</label>}
+      {label && <label style={{ display:'block',fontSize:11,fontWeight:600,color:'#7e8899',marginBottom:5 }}>{label}</label>}
       <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} inputMode={im ?? (type==='number'?'numeric':undefined)} style={inputStyle} />
     </div>
   );
@@ -18,8 +18,8 @@ export function Inp({ label, value, onChange, placeholder, type = 'text', inputM
 export function Sel({ label, value, onChange, options, style: extra }) {
   return (
     <div style={{ marginBottom:12, ...extra }}>
-      {label && <label style={{ display:'block',fontSize:11,fontWeight:600,color:'#6c7280',marginBottom:5 }}>{label}</label>}
-      <select value={value} onChange={e => onChange(e.target.value)} style={{ ...inputStyle,appearance:'none',WebkitAppearance:'none',backgroundImage:"url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236c7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\")",backgroundRepeat:'no-repeat',backgroundPosition:'right 12px center',paddingRight:32 }}>
+      {label && <label style={{ display:'block',fontSize:11,fontWeight:600,color:'#7e8899',marginBottom:5 }}>{label}</label>}
+      <select value={value} onChange={e => onChange(e.target.value)} style={{ ...inputStyle,appearance:'none',WebkitAppearance:'none',backgroundImage:"url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237e8899' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\")",backgroundRepeat:'no-repeat',backgroundPosition:'right 12px center',paddingRight:32 }}>
         {options.map((o,i) => <option key={i} value={o.v}>{o.l}</option>)}
       </select>
     </div>
@@ -37,7 +37,7 @@ export function Btn({ children, color, onClick, disabled, style: s }) {
 export function Pnl({ title, children }) {
   return (
     <div style={{ ...cardStyle,marginBottom:14,padding:16 }}>
-      <h3 style={{ fontSize:13,fontWeight:700,color:'#8888a0',margin:'0 0 14px',textTransform:'uppercase',letterSpacing:'0.5px' }}>{title}</h3>
+      <h3 style={{ fontSize:11,fontWeight:700,color:'#9090a8',margin:'0 0 14px',textTransform:'uppercase',letterSpacing:'0.8px' }}>{title}</h3>
       {children}
     </div>
   );
@@ -177,7 +177,7 @@ export function EmojiPicker({ value, onChange }) {
   return (
     <div ref={ref} style={{ position:'relative' }}>
       <button type="button" onClick={() => setOpen(o => !o)} style={{
-        width:44, height:44, borderRadius:10,
+        width:40, height:40, borderRadius:10,
         border:`2px solid ${open ? '#7c6cf0' : 'rgba(255,255,255,0.1)'}`,
         background:'rgba(255,255,255,0.05)', fontSize:22, cursor:'pointer',
         display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0,

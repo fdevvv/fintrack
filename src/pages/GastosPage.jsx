@@ -56,7 +56,7 @@ export function GastosPage() {
   return (
     <div style={{ padding:'0 16px',maxWidth:900,margin:'0 auto' }}>
       <ST color="#2dd4a8">Gastos del Mes</ST>
-      <p style={{ fontSize:11,color:'#5c5c72',marginBottom:12 }}>Efectivo, transferencia, QR y débito</p>
+      <p style={{ fontSize:11,color:'#5c5c72',marginBottom:12 }}>Gastos del día en efectivo, transferencia, QR y débito — no incluye tarjeta de crédito</p>
 
       {/* Method filter */}
       <div style={{ display:'flex',gap:6,flexWrap:'wrap',marginBottom:8 }}>

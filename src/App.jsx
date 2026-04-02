@@ -74,7 +74,7 @@ export default function App() {
 
   if (authLoading) {
     return (
-      <div style={{ minHeight:'100vh',background:'#0a0a12',display:'flex',alignItems:'center',justifyContent:'center' }}>
+      <div style={{ minHeight:'100vh',background:'#0c0c18',display:'flex',alignItems:'center',justifyContent:'center' }}>
         <style>{`
           @keyframes ftBarSlide {
             0%   { width: 0%; opacity: 0.7; }
@@ -133,7 +133,7 @@ export default function App() {
         .ft-page-enter { animation: ftPageIn 0.18s ease-out both; }
 
         /* Mobile first */
-        .ft-app { min-height:100vh; background:#0a0a12; font-family:'DM Sans',system-ui,sans-serif; }
+        .ft-app { min-height:100vh; background:#0c0c18; font-family:'DM Sans',system-ui,sans-serif; }
         .ft-sidebar { display:none; }
         .ft-topbar { display:none; }
         .ft-mobile-nav { display:flex; }
@@ -142,7 +142,7 @@ export default function App() {
         /* Desktop: sidebar + centered content */
         @media (min-width: 768px) {
           .ft-app { display:flex; }
-          .ft-sidebar { display:flex; flex-direction:column; width:220px; min-height:100vh; position:fixed; left:0; top:0; background:#08080f; border-right:1px solid rgba(255,255,255,0.05); z-index:50; }
+          .ft-sidebar { display:flex; flex-direction:column; width:220px; min-height:100vh; position:fixed; left:0; top:0; background:#0a0a16; border-right:1px solid rgba(255,255,255,0.07); z-index:50; }
           .ft-topbar { display:flex; }
           .ft-mobile-header { display:none !important; }
           .ft-mobile-nav { display:none !important; }

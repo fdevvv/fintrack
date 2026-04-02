@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMonthDetail } from '@/hooks/analytics/useMonthDetail';
 import { Pnl, ST } from '@/components/ui/Shared';
@@ -17,9 +17,13 @@ export function MesDetailPage({ month }) {
   const navigate  = useNavigate();
   const { ingresoNeto, totalExpenses, disponible, rubroData, sectionData, expenses } = useMonthDetail(month);
 
+  const [search, setSearch] = useState('');
+
   const sorted = useMemo(() =>
-    [...expenses].sort((a, b) => new Date(b.transaction_date) - new Date(a.transaction_date)),
-    [expenses]
+    [...expenses]
+      .sort((a, b) => new Date(b.transaction_date) - new Date(a.transaction_date))
+      .filter(t => !search || (t.item_name || t.description || '').toLowerCase().includes(search.toLowerCase())),
+    [expenses, search]
   );
 
   return (
@@ -114,10 +118,19 @@ export function MesDetailPage({ month }) {
       </div>
 
       {/* Transaction list */}
+      <ST color="#7c6cf0">Detalle de Gastos</ST>
+      <p style={{ fontSize: 11, color: '#5c5c72', marginBottom: 12, marginTop: 0 }}>Todos los gastos con tarjeta de crédito del mes.</p>
+      <input
+        type="text"
+        placeholder="Buscar gasto..."
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        style={{ width: '100%', boxSizing: 'border-box', padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)', color: '#e8e8f0', fontSize: 13, outline: 'none', marginBottom: 10 }}
+      />
       {sorted.length > 0 ? (
-        <div style={{ marginTop: 14 }}>
+        <div>
           <div style={{ fontSize: 11, color: '#5c5c72', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
-            Detalle · {sorted.length} movimientos
+            {sorted.length} movimientos
           </div>
           {sorted.map(t => (
             <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>

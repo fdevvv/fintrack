@@ -76,6 +76,7 @@ export function ListPage() {
   return (
     <div style={{ padding:'0 16px',maxWidth:800,margin:'0 auto' }}>
       <ST color="#7c6cf0">Detalle de Gastos</ST>
+      <p style={{ fontSize:11,color:'#5c5c72',marginBottom:12,marginTop:0 }}>Gastos con tarjeta de crédito, cuotas y préstamos — no incluye gastos del día.</p>
       <div style={{ position:'relative',marginBottom:10,maxWidth:500 }}>
         <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Buscar gasto..." style={{ width:'100%',padding:'11px 14px',fontSize:16,borderRadius:10,border:'1px solid rgba(255,255,255,0.08)',background:'rgba(255,255,255,0.04)',color:'#e8e8f0',outline:'none',boxSizing:'border-box' }} />
         {search && <button onClick={()=>setSearch('')} style={{ position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',color:'#6c7280',fontSize:16,cursor:'pointer' }}>✕</button>}

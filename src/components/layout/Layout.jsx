@@ -62,8 +62,15 @@ export function Sidebar({ active, onNav, year, years, setYear, onSignOut, isAdmi
     <aside className="ft-sidebar">
       {/* Logo */}
       <div style={{ padding:'20px 20px 16px' }}>
-        <div style={{ fontSize:16,fontWeight:800,color:'#e8e8f0',display:'flex',alignItems:'center',gap:8 }}>
-          <span style={{ fontSize:20 }}>💰</span> FinTrack
+        <div style={{ fontSize:16,fontWeight:800,color:'#e8e8f0',display:'flex',alignItems:'center',gap:10 }}>
+          <div style={{ width:28,height:28,borderRadius:9,background:'linear-gradient(135deg,#7c6cf0 0%,#2dd4a8 100%)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,boxShadow:'0 0 14px rgba(124,108,240,0.35)' }}>
+            <svg width="16" height="16" viewBox="0 0 30 30" fill="none">
+              <rect x="3" y="18" width="6" height="9" rx="2" fill="white" opacity="0.9"/>
+              <rect x="12" y="11" width="6" height="16" rx="2" fill="white"/>
+              <rect x="21" y="4" width="6" height="23" rx="2" fill="white" opacity="0.9"/>
+            </svg>
+          </div>
+          FinTrack
         </div>
         <div style={{ fontSize:10,color:'#5c5c72',marginTop:4 }}>Control de gastos</div>
       </div>
@@ -81,10 +88,11 @@ export function Sidebar({ active, onNav, year, years, setYear, onSignOut, isAdmi
           <button key={n.id} onClick={() => onNav(n.id)} style={{
             width:'100%',display:'flex',alignItems:'center',gap:10,padding:'10px 12px',
             borderRadius:10,border:'none',marginBottom:2,
-            background:active===n.id?'rgba(124,108,240,0.12)':'transparent',
-            color:active===n.id?'#a8a0f8':'#6c6c84',
+            background:active===n.id?'rgba(124,108,240,0.10)':'transparent',
+            color:active===n.id?'#b8b0ff':'#7070a0',
             fontSize:13,fontWeight:active===n.id?600:500,cursor:'pointer',
             transition:'all .15s',textAlign:'left',
+            boxShadow:active===n.id?'inset 3px 0 0 #7c6cf0':'none',
           }}>
             <span style={{ fontSize:16,width:20,textAlign:'center' }}>{n.icon}</span>
             <span>{n.label}</span>
@@ -132,7 +140,7 @@ export function TopBar({ year, years, setYear, syncing, onSignOut, onNav }) {
   return (
     <>
       {/* Mobile header */}
-      <header className="ft-mobile-header" style={{ padding:'10px 16px',background:'rgba(12,12,20,0.9)',backdropFilter:'blur(16px)',borderBottom:'1px solid rgba(255,255,255,0.04)',position:'sticky',top:0,zIndex:50 }}>
+      <header className="ft-mobile-header" style={{ padding:'10px 16px',background:'rgba(12,12,24,0.92)',backdropFilter:'blur(16px)',borderBottom:'1px solid rgba(255,255,255,0.07)',position:'sticky',top:0,zIndex:50 }}>
         <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center' }}>
           {/* Profile area con dropdown */}
           <div style={{ position:'relative', minWidth:0 }}>
@@ -199,11 +207,12 @@ export function TopBar({ year, years, setYear, syncing, onSignOut, onNav }) {
 export function MobileNav({ active, onNav, isAdmin }) {
   const mobileNavs = NAVS.filter(n => n.id !== 'perfil');
   return (
-    <nav className="ft-mobile-nav" style={{ position:'fixed',bottom:0,left:0,right:0,background:'rgba(12,12,20,0.95)',backdropFilter:'blur(20px)',borderTop:'1px solid rgba(255,255,255,0.05)',justifyContent:'space-around',padding:'6px 0 env(safe-area-inset-bottom, 8px)',zIndex:100 }}>
+    <nav className="ft-mobile-nav" style={{ position:'fixed',bottom:0,left:0,right:0,background:'rgba(12,12,24,0.96)',backdropFilter:'blur(20px)',borderTop:'1px solid rgba(255,255,255,0.08)',justifyContent:'space-around',padding:'6px 0 env(safe-area-inset-bottom, 8px)',zIndex:100 }}>
       {[...mobileNavs, ...(isAdmin ? [ADMIN_NAV] : [])].map(n => (
-        <button key={n.id} onClick={() => onNav(n.id)} style={{ background:'none',border:'none',color:active===n.id?'#7c6cf0':'#5c5c72',display:'flex',flexDirection:'column',alignItems:'center',gap:2,fontSize:9,fontWeight:600,cursor:'pointer',padding:'6px 8px' }}>
+        <button key={n.id} onClick={() => onNav(n.id)} style={{ background:'none',border:'none',color:active===n.id?'#a8a0f8':'#6c6c88',display:'flex',flexDirection:'column',alignItems:'center',gap:2,fontSize:9,fontWeight:600,cursor:'pointer',padding:'6px 8px' }}>
           <span style={{ fontSize:18,lineHeight:1 }}>{n.icon}</span>
           <span>{n.label}</span>
+          <span style={{ width:16,height:2,borderRadius:1,background:active===n.id?'#7c6cf0':'transparent',marginTop:1,transition:'background .15s' }} />
         </button>
       ))}
     </nav>

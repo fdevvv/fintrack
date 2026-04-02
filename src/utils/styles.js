@@ -2,10 +2,10 @@
 
 export const inputStyle = {
   width: '100%',
-  padding: '11px 14px',
+  padding: '9px 12px',
   borderRadius: 10,
-  border: '1px solid rgba(255,255,255,0.08)',
-  background: 'rgba(255,255,255,0.04)',
+  border: '1px solid rgba(255,255,255,0.11)',
+  background: 'rgba(255,255,255,0.06)',
   color: '#e8e8f0',
   fontSize: 16,
   outline: 'none',
@@ -13,10 +13,11 @@ export const inputStyle = {
 };
 
 export const cardStyle = {
-  background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)',
+  background: 'linear-gradient(135deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.03) 100%)',
   borderRadius: 14,
   padding: '14px 16px',
-  border: '1px solid rgba(255,255,255,0.08)',
+  border: '1px solid rgba(255,255,255,0.10)',
+  boxShadow: '0 2px 12px rgba(0,0,0,0.35)',
 };
 
 export const tooltipStyle = {
