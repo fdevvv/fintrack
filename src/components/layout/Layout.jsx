@@ -140,7 +140,7 @@ export function TopBar({ year, years, setYear, syncing, onSignOut, onNav }) {
   return (
     <>
       {/* Mobile header */}
-      <header className="ft-mobile-header" style={{ padding:'10px 16px',background:'rgba(12,12,24,0.92)',backdropFilter:'blur(16px)',borderBottom:'1px solid rgba(255,255,255,0.07)',position:'sticky',top:0,zIndex:50 }}>
+      <header className="ft-mobile-header" style={{ padding:'10px 16px',paddingTop:'calc(env(safe-area-inset-top, 0px) + 10px)',background:'rgba(12,12,24,0.92)',backdropFilter:'blur(16px)',borderBottom:'1px solid rgba(255,255,255,0.07)',position:'fixed',top:0,left:0,right:0,zIndex:50 }}>
         <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center' }}>
           {/* Profile area con dropdown */}
           <div style={{ position:'relative', minWidth:0 }}>

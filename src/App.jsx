@@ -138,7 +138,7 @@ export default function App() {
         .ft-sidebar { display:none; }
         .ft-topbar { display:none; }
         .ft-mobile-nav { display:flex; }
-        .ft-main { padding-bottom:72px; }
+        .ft-main { padding-bottom:72px; padding-top:calc(env(safe-area-inset-top, 0px) + 52px); }
 
         /* Desktop: sidebar + centered content */
         @media (min-width: 768px) {
