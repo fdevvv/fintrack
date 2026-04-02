@@ -53,6 +53,7 @@ export default function App() {
   const handleNav = (p) => {
     setPage(p);
     navigate(PAGE_ROUTES[p] || '/');
+    navigator.serviceWorker?.getRegistration().then(r => r?.update()).catch(() => {});
   };
 
   useEffect(() => {
