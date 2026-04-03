@@ -13,6 +13,12 @@ export function useDashboard() {
     [transactions]
   );
 
+  // Gastos del mes actual — base para todos los cálculos del mes
+  const currentMonthExpenses = useMemo(() => {
+    const moStr = String(mo + 1).padStart(2, '0');
+    return expenses.filter(tx => tx.transaction_date.slice(5, 7) === moStr);
+  }, [expenses, mo]);
+
   // Totales por mes para gráficos (todos los gastos, manual + importado)
   const monthlyTotals = useMemo(() => {
     const t = new Array(12).fill(0);
@@ -39,11 +45,12 @@ export function useDashboard() {
   // Distribución por rubro del mes actual — gráfico de torta
   const rubroData = useMemo(() => {
     const m = {};
-    expenses
-      .filter(tx => new Date(tx.transaction_date).getMonth() === mo)
-      .forEach(tx => { const r = tx.categories?.name || 'Otros'; m[r] = (m[r] || 0) + tx.amount_cents; });
+    currentMonthExpenses.forEach(tx => {
+      const r = tx.categories?.name || 'Otros';
+      m[r] = (m[r] || 0) + tx.amount_cents;
+    });
     return Object.entries(m).sort((a, b) => b[1] - a[1]).map(([name, total]) => ({ name, total }));
-  }, [expenses, mo]);
+  }, [currentMonthExpenses]);
 
   // ── Balance (local, tiempo real) ───────────────────────────────────────────
 
@@ -52,41 +59,38 @@ export function useDashboard() {
 
   // Gastos del mes (todos los tipos, tiempo real desde estado local)
   const gastosDiarios = useMemo(() =>
-    transactions
-      .filter(t =>
-        t.type === 'expense' &&
-        new Date(t.transaction_date).getMonth() === mo
-      )
-      .reduce((s, t) => s + t.amount_cents, 0),
-    [transactions, mo]
+    currentMonthExpenses.reduce((s, t) => s + t.amount_cents, 0),
+    [currentMonthExpenses]
   );
 
+  // Strings de fecha memoizados
+  const { todayStr, weekStartStr } = useMemo(() => {
+    const today = new Date();
+    const ts = today.toISOString().split('T')[0];
+    const ws = new Date(today);
+    ws.setDate(today.getDate() - today.getDay());
+    return { todayStr: ts, weekStartStr: ws.toISOString().split('T')[0] };
+  }, [mo]);
+
   // Today's spending
-  const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
   const todaySpent = useMemo(() =>
-    expenses
-      .filter(t => new Date(t.transaction_date).getMonth() === mo && t.transaction_date.slice(0,10) === todayStr)
+    currentMonthExpenses
+      .filter(t => t.transaction_date.slice(0, 10) === todayStr)
       .reduce((s, t) => s + t.amount_cents, 0),
-    [expenses, mo, todayStr]
+    [currentMonthExpenses, todayStr]
   );
 
   // This week's spending
-  const weekStart = new Date(today);
-  weekStart.setDate(today.getDate() - today.getDay());
-  const weekStartStr = weekStart.toISOString().split('T')[0];
   const weekSpent = useMemo(() =>
-    expenses
-      .filter(t => new Date(t.transaction_date).getMonth() === mo && t.transaction_date.slice(0,10) >= weekStartStr)
+    currentMonthExpenses
+      .filter(t => t.transaction_date.slice(0, 10) >= weekStartStr)
       .reduce((s, t) => s + t.amount_cents, 0),
-    [expenses, mo, weekStartStr]
+    [currentMonthExpenses, weekStartStr]
   );
 
-  // Daily average and month-end projection
-  const daysElapsed = today.getDate();
-  const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+  // Daily average
+  const daysElapsed = new Date().getDate();
   const dailyAvg = daysElapsed > 0 ? Math.round(gastosDiarios / daysElapsed) : 0;
-  const projection = Math.round(dailyAvg * daysInMonth);
 
   // Restante = disponible actual − total gastado del mes
   const restante = ingresoNeto - gastosDiarios;
@@ -109,9 +113,7 @@ export function useDashboard() {
     // Alertas de presupuesto por rubro
     if (budgets && Object.keys(budgets).length) {
       const rm = {};
-      expenses
-        .filter(t => new Date(t.transaction_date).getMonth() === mo)
-        .forEach(t => { const r = t.categories?.name || 'Otros'; rm[r] = (rm[r] || 0) + t.amount_cents; });
+      currentMonthExpenses.forEach(t => { const r = t.categories?.name || 'Otros'; rm[r] = (rm[r] || 0) + t.amount_cents; });
       Object.entries(budgets).forEach(([rubro, limit]) => {
         const spent = rm[rubro] || 0;
         if (limit > 0 && spent > limit) {
@@ -123,20 +125,18 @@ export function useDashboard() {
     }
 
     return al;
-  }, [expenses, budgets, ingresoNeto, gastosDiarios, restante, mo]);
+  }, [currentMonthExpenses, budgets, ingresoNeto, gastosDiarios, restante, mo]);
 
   // ── Presupuestos ───────────────────────────────────────────────────────────
   const budgetEntries = useMemo(() => {
     if (!budgets || !Object.keys(budgets).length) return [];
     const rm = {};
-    expenses
-      .filter(t => new Date(t.transaction_date).getMonth() === mo)
-      .forEach(t => { const r = t.categories?.name || 'Otros'; rm[r] = (rm[r] || 0) + t.amount_cents; });
+    currentMonthExpenses.forEach(t => { const r = t.categories?.name || 'Otros'; rm[r] = (rm[r] || 0) + t.amount_cents; });
     return Object.entries(budgets).filter(([, v]) => v > 0).map(([rubro, limit]) => {
       const spent = rm[rubro] || 0;
       return { rubro, limit, spent, pct: Math.min((spent / limit) * 100, 150) };
     }).sort((a, b) => b.pct - a.pct);
-  }, [expenses, budgets, mo]);
+  }, [currentMonthExpenses, budgets]);
 
   // ── Gráfico Ingreso vs Gasto ───────────────────────────────────────────────
   const incomeVsExpenseData = MONTHS.map((m, i) => ({
@@ -174,15 +174,11 @@ export function useDashboard() {
     alerts,
     budgetEntries,
     ingresoNeto,
-    gastosDiarios,
     restante,
     incomeVsExpenseData,
     cards,
     todaySpent,
     weekSpent,
     dailyAvg,
-    projection,
-    daysElapsed,
-    daysInMonth,
   };
 }

@@ -61,10 +61,11 @@ export default defineConfig({
     sourcemap: false,
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          charts: ['recharts'],
-          supabase: ['@supabase/supabase-js'],
+        manualChunks(id) {
+          if (id.includes('node_modules/recharts') || id.includes('node_modules/victory-vendor')) return 'charts';
+          if (id.includes('node_modules/@supabase')) return 'supabase';
+          if (id.includes('node_modules/date-fns')) return 'datefns';
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/react-router')) return 'vendor';
         },
       },
     },

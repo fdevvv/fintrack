@@ -5,20 +5,16 @@ import { SECTIONS } from '@/utils/constants';
 export function useMonthDetail(monthKey) {
   const { transactions, income } = useStore();
 
-  const { year, monthIndex } = useMemo(() => {
-    if (!monthKey) return { year: -1, monthIndex: -1 };
-    const [y, m] = monthKey.split('-').map(Number);
-    return { year: y, monthIndex: m - 1 };
+  const monthIndex = useMemo(() => {
+    if (!monthKey) return -1;
+    return Number(monthKey.split('-')[1]) - 1;
   }, [monthKey]);
 
-  const expenses = useMemo(() =>
-    transactions.filter(tx => {
-      if (tx.type !== 'expense') return false;
-      const d = new Date(tx.transaction_date + 'T00:00:00');
-      return d.getFullYear() === year && d.getMonth() === monthIndex;
-    }),
-    [transactions, year, monthIndex]
-  );
+  const expenses = useMemo(() => {
+    if (!monthKey) return [];
+    const prefix = monthKey.slice(0, 7); // "YYYY-MM"
+    return transactions.filter(tx => tx.type === 'expense' && tx.transaction_date.startsWith(prefix));
+  }, [transactions, monthKey]);
 
   const totalExpenses = useMemo(() =>
     expenses.reduce((s, t) => s + t.amount_cents, 0),

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useStore } from './stores/useStore';
 import { useUiStore } from './stores/uiStore';
@@ -9,16 +9,17 @@ import { Toast } from './components/ui/Shared';
 import { NotificationsPanel } from './components/ui/NotificationBell';
 import { UpdatePrompt } from './components/ui/UpdatePrompt';
 import { OnboardingGuide } from './components/onboarding/OnboardingGuide';
-import { DashPage } from './pages/DashPage';
-import { AddPage } from './pages/AddPage';
-import { ListPage } from './pages/ListPage';
-import { ImportPage } from './pages/ImportPage';
-import { GastosPage } from './pages/GastosPage';
-import { DolarPage } from './pages/DolarPage';
-import { ConfigPage } from './pages/ConfigPage';
-import { AdminPage } from './pages/AdminPage';
-import { MesDetailPage } from './pages/MesDetailPage';
-import { ProfilePage } from './pages/ProfilePage';
+
+const DashPage      = lazy(() => import('./pages/DashPage').then(m => ({ default: m.DashPage })));
+const AddPage       = lazy(() => import('./pages/AddPage').then(m => ({ default: m.AddPage })));
+const ListPage      = lazy(() => import('./pages/ListPage').then(m => ({ default: m.ListPage })));
+const ImportPage    = lazy(() => import('./pages/ImportPage').then(m => ({ default: m.ImportPage })));
+const GastosPage    = lazy(() => import('./pages/GastosPage').then(m => ({ default: m.GastosPage })));
+const DolarPage     = lazy(() => import('./pages/DolarPage').then(m => ({ default: m.DolarPage })));
+const ConfigPage    = lazy(() => import('./pages/ConfigPage').then(m => ({ default: m.ConfigPage })));
+const AdminPage     = lazy(() => import('./pages/AdminPage').then(m => ({ default: m.AdminPage })));
+const MesDetailPage = lazy(() => import('./pages/MesDetailPage').then(m => ({ default: m.MesDetailPage })));
+const ProfilePage   = lazy(() => import('./pages/ProfilePage').then(m => ({ default: m.ProfilePage })));
 
 const PAGE_ROUTES = {
   dash:   '/panel',
@@ -165,7 +166,9 @@ export default function App() {
           <TopBar year={year} years={years} setYear={setYear} syncing={syncing} onSignOut={signOut} onNav={handleNav} />
           <div className="ft-page">
             <div key={page + location.pathname} className="ft-page-enter">
-              {renderPage()}
+              <Suspense fallback={<div className="ft-spinner" style={{ margin:'40px auto' }} />}>
+                {renderPage()}
+              </Suspense>
             </div>
           </div>
         </div>

@@ -51,34 +51,21 @@ export const useStore = create((set, get) => ({
       const activeYear = get().year;
       const storeMonth = get().month;
       const activeMonth = storeMonth >= 0 ? storeMonth + 1 : new Date().getMonth() + 1;
-      const [txs, cats, inc, prof, budgetRows] = await Promise.all([
+      const [txs, cats, inc, prof, budgetRows, balanceRows, sectionRows] = await Promise.all([
         transactionsService.list(activeYear),
         categoriesService.list(),
         incomeService.list(activeYear),
         profileService.get(),
         budgetsService.list(activeYear, activeMonth),
+        monthlyBalanceService.list(activeYear).catch(e => { console.error('[monthly_balance]', e); return []; }),
+        sectionsService.list().catch(e => { console.error('[user_sections]', e); return []; }),
       ]);
       const budgets = {};
       budgetRows.forEach(b => {
         const name = b.categories?.name;
         if (name) budgets[name] = b.limit_cents;
       });
-      set({ transactions: txs, categories: cats, income: inc, profile: prof, years: yrs, budgets });
-
-      // Carga separada — no bloquea si la view aún no fue aplicada en Supabase
-      try {
-        const balanceRows = await monthlyBalanceService.list(activeYear);
-        set({ monthlyBalance: balanceRows });
-      } catch (balanceErr) {
-        console.error('[monthly_balance] error:', balanceErr);
-      }
-
-      try {
-        const sectionRows = await sectionsService.list();
-        set({ userSections: sectionRows });
-      } catch (secErr) {
-        console.error('[user_sections] error:', secErr);
-      }
+      set({ transactions: txs, categories: cats, income: inc, profile: prof, years: yrs, budgets, monthlyBalance: balanceRows, userSections: sectionRows });
       useUiStore.getState().setSyncing(false);
     } catch (err) {
       console.error('loadAll error:', err);

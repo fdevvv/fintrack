@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useStore } from '@/stores/useStore';
 import { useUiStore } from '@/stores/uiStore';
@@ -31,14 +31,21 @@ export function GastosPage() {
   };
   const [delTarget, setDelTarget] = useState(null);
 
+  const { transactions } = useStore();
+
   const { filtered: rawFiltered, total, catBreakdown: catData, monthComparison } = useTransactions({
     month: localMonth,
     filterMethod,
     sourceFilter: 'manual',
   });
 
-  // Total de todos los gastos del mes (igual que el panel) para calcular el disponible real
-  const { total: totalTodos } = useTransactions({ month: localMonth });
+  // Total de todos los gastos del mes (incluye importados) — derivado sin segunda llamada al hook
+  const totalTodos = useMemo(() => {
+    const moStr = String(localMonth + 1).padStart(2, '0');
+    return transactions
+      .filter(t => t.type === 'expense' && t.transaction_date.slice(5, 7) === moStr)
+      .reduce((s, t) => s + t.amount_cents, 0);
+  }, [transactions, localMonth]);
   const { remove } = useDeleteTransaction();
 
   const filtered = [...rawFiltered].sort((a, b) => new Date(b.transaction_date) - new Date(a.transaction_date));

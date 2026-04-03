@@ -17,7 +17,7 @@ export function DashPage() {
   const {
     mo, sectionBarData, rubroData, rubroTotal,
     alerts, budgetEntries, incomeVsExpenseData, cards,
-    gastosDiarios, todaySpent, weekSpent, dailyAvg, projection, daysElapsed, daysInMonth,
+    todaySpent, weekSpent, dailyAvg,
   } = useDashboard();
   const { goals } = useSavingsGoals();
   const { data: cmp, loading: cmpLoading } = useMonthComparison();
@@ -187,16 +187,6 @@ export function DashPage() {
         </div>
       ))}
 
-      {/* Month-end projection */}
-      {daysElapsed >= 3 && gastosDiarios > 0 && (
-        <div style={{ padding:'10px 14px',borderRadius:10,marginBottom:8,background:'rgba(96,168,240,0.08)',border:'1px solid rgba(96,168,240,0.15)',display:'flex',justifyContent:'space-between',alignItems:'center' }}>
-          <div>
-            <span style={{ fontSize:11,fontWeight:600,color:'#60a8f0' }}>Proyección de cierre</span>
-            <div style={{ fontSize:10,color:'#6c7280',marginTop:1 }}>A este ritmo ({daysElapsed} días)</div>
-          </div>
-          <span style={{ fontSize:17,fontWeight:800,color:'#60a8f0',fontVariantNumeric:'tabular-nums' }}>{Mn.fmt(projection)}</span>
-        </div>
-      )}
 
       {/* Budget progress */}
       {budgetEntries.length > 0 && (
