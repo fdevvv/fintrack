@@ -80,11 +80,17 @@ export function GastosPage() {
         const inc = income[localMonth >= 0 ? localMonth : new Date().getMonth()] || 0;
         const disponible = inc - totalTodos;
         const rest = disponible - total;
+        const cc = (c) => ({
+          background: `linear-gradient(135deg, ${c}12 0%, rgba(255,255,255,0.02) 100%)`,
+          borderRadius: 14, padding: '14px 16px',
+          border: `1px solid ${c}30`,
+          boxShadow: '0 2px 12px rgba(0,0,0,0.35)',
+        });
         const AmtCell = ({ label, value, color, sub }) => {
           const [expanded, setExpanded] = useState(false);
           return (
-            <div style={cardStyle} onClick={() => setExpanded(!expanded)} title={Mn.fmt(value)}>
-              <div style={{ fontSize:10,color:'#6c6c84',fontWeight:600,textTransform:'uppercase' }}>{label}</div>
+            <div style={cc(color)} onClick={() => setExpanded(!expanded)} title={Mn.fmt(value)}>
+              <div style={{ fontSize:10,color:`${color}80`,fontWeight:600,textTransform:'uppercase' }}>{label}</div>
               <div style={{ fontSize:expanded?15:18,fontWeight:800,color,marginTop:2,cursor:'pointer',transition:'font-size .15s' }}>{expanded?Mn.fmt(value):Mn.short(value)}</div>
               {sub && <div style={{ fontSize:9,color:'#5c5c72' }}>{sub}</div>}
             </div>
@@ -93,7 +99,7 @@ export function GastosPage() {
         return (
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8, marginBottom:14 }}>
             <AmtCell label="Disponible" value={disponible} color={disponible>=0?'#2dd4a8':'#f06070'} />
-            <AmtCell label="Gastado" value={total} color="#f06070" sub={`${filtered.length} gastos`} />
+            <AmtCell label="Gastado" value={total} color="#f0a848" sub={`${filtered.length} gastos`} />
             <AmtCell label="Restante" value={rest} color={rest>=0?'#2dd4a8':'#f06070'} sub={rest>=0?'Sobrante':'Déficit'} />
           </div>
         );
@@ -133,8 +139,8 @@ export function GastosPage() {
                 <XAxis dataKey="name" tick={{fill:'#8888a0',fontSize:9}} axisLine={false} tickLine={false} />
                 <YAxis tick={{fill:'#8888a0',fontSize:9}} axisLine={false} tickLine={false} tickFormatter={Mn.short} />
                 <Tooltip contentStyle={ttS} labelStyle={tooltipLabel} itemStyle={tooltipItem} wrapperStyle={tooltipWrapper} cursor={tooltipCursor} formatter={(v,name)=>[Mn.fmt(v),name]} />
-                <Bar dataKey={MONTHS[localMonth>=0?localMonth:new Date().getMonth()]} fill="#2dd4a8" radius={[4,4,0,0]} />
-                <Bar dataKey={MONTHS[(localMonth>=0?localMonth:new Date().getMonth())===0?11:(localMonth>=0?localMonth:new Date().getMonth())-1]} fill="rgba(45,212,168,0.3)" radius={[4,4,0,0]} />
+                <Bar dataKey={MONTHS[localMonth>=0?localMonth:new Date().getMonth()]} fill="#7c6cf0" radius={[4,4,0,0]} />
+                <Bar dataKey={MONTHS[(localMonth>=0?localMonth:new Date().getMonth())===0?11:(localMonth>=0?localMonth:new Date().getMonth())-1]} fill="#f0a848" radius={[4,4,0,0]} />
               </BarChart>
             </ResponsiveContainer>
           </Pnl>

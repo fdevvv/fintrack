@@ -248,9 +248,9 @@ export function AddPage() {
       <p style={{ fontSize:11,color:'#6c7280',marginBottom:14,lineHeight:1.5 }}>Fijá un límite de gasto mensual por rubro. Te avisamos en el panel cuando estás cerca de superarlo.</p>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 8 }}>
         <Sel label="Rubro" value={budRub} onChange={setBudRub} options={[{ v: '', l: 'Seleccionar...' }, ...expenseCats.map(c => ({ v: c.name, l: `${c.icon || RUBRO_EMOJI[c.name] || '📎'} ${c.name}` }))]} />
-        <Inp label="Límite ($)" value={budMonto} onChange={setBudMonto} placeholder="0" type="number" />
+        <Inp label="Límite ($)" value={budMonto} onChange={setBudMonto} placeholder="Ej: 50.000" type="text" inputMode="decimal" />
       </div>
-      <Btn color="#e070b0" onClick={() => { if (!budRub || !budMonto) { showToast('Completá', true); return; } setBudget(budRub, Math.round(Number(budMonto))); showToast('✓ Presupuesto guardado'); setBudRub(''); setBudMonto(''); }}>Guardar Presupuesto</Btn>
+      <Btn color="#e070b0" onClick={() => { if (!budRub || !(parseARS(budMonto) > 0)) { showToast('Completá', true); return; } setBudget(budRub, Math.round(parseARS(budMonto))); showToast('✓ Presupuesto guardado'); setBudRub(''); setBudMonto(''); }}>Guardar Presupuesto</Btn>
       {Object.entries(budgets).filter(([, v]) => v > 0).map(([rubro, monto]) => (
         <div key={rubro} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
           <span style={{ fontSize: 12, color: '#e8e8f0' }}>{expenseCats.find(c => c.name === rubro)?.icon || RUBRO_EMOJI[rubro] || '📎'} {rubro} — {Mn.fmt(monto)}/mes</span>
@@ -268,15 +268,15 @@ export function AddPage() {
       <p style={{ fontSize:11,color:'#6c7280',marginBottom:14,lineHeight:1.5 }}>Definí un objetivo de ahorro con un monto y fecha límite. Se muestra en el panel con barra de progreso.</p>
       <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:10 }}>
         <Inp label="Nombre" value={goalName} onChange={setGoalName} placeholder="Ej: Vacaciones" />
-        <Inp label="Objetivo ($)" value={goalTarget} onChange={setGoalTarget} placeholder="500000" type="number" />
+        <Inp label="Objetivo ($)" value={goalTarget} onChange={setGoalTarget} placeholder="Ej: 500.000" type="text" inputMode="decimal" />
       </div>
       <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:10 }}>
-        <Inp label="Ahorrado hasta ahora ($)" value={goalSaved} onChange={setGoalSaved} placeholder="0" type="number" />
+        <Inp label="Ahorrado hasta ahora ($)" value={goalSaved} onChange={setGoalSaved} placeholder="Ej: 100.000" type="text" inputMode="decimal" />
         <Inp label="Fecha límite (Ej: Dic 2026)" value={goalDeadline} onChange={setGoalDeadline} placeholder="Dic 2026" />
       </div>
       <Btn color="#4ade80" style={{ color:'#0a0a12' }} onClick={() => {
-        if (!goalName.trim() || !goalTarget || Number(goalTarget) <= 0) { showToast('Completá nombre y objetivo', true); return; }
-        addGoal({ name: goalName.trim(), target: Number(goalTarget), saved: Number(goalSaved) || 0, deadline: goalDeadline.trim() });
+        if (!goalName.trim() || !(parseARS(goalTarget) > 0)) { showToast('Completá nombre y objetivo', true); return; }
+        addGoal({ name: goalName.trim(), target: Math.round(parseARS(goalTarget)), saved: Math.round(parseARS(goalSaved) || 0), deadline: goalDeadline.trim() });
         showToast('✓ Meta guardada');
         setGoalName(''); setGoalTarget(''); setGoalSaved(''); setGoalDeadline('');
       }}>Guardar Meta</Btn>
@@ -304,24 +304,24 @@ export function AddPage() {
               <div style={{ display:'flex',gap:6,marginTop:8,alignItems:'center' }}>
                 <input
                   autoFocus
-                  type="number"
-                  inputMode="numeric"
-                  placeholder="Monto a agregar"
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="Ej: 50.000"
                   value={addAmt}
                   onChange={e => setAddAmt(e.target.value)}
                   onKeyDown={e => {
-                    if (e.key === 'Enter' && addAmt && Number(addAmt) > 0) {
-                      updateSaved(g.id, g.saved_amount + Number(addAmt));
-                      showToast(`✓ +${Mn.fmt(Number(addAmt))} a "${g.name}"`);
+                    if (e.key === 'Enter' && parseARS(addAmt) > 0) {
+                      updateSaved(g.id, g.saved_amount + Math.round(parseARS(addAmt)));
+                      showToast(`✓ +${Mn.fmt(Math.round(parseARS(addAmt)))} a "${g.name}"`);
                       setAddingTo(null); setAddAmt('');
                     }
                   }}
                   style={{ flex:1,padding:'9px 12px',borderRadius:8,border:'1px solid rgba(74,222,128,0.3)',background:'rgba(255,255,255,0.04)',color:'#e8e8f0',fontSize:16,outline:'none' }}
                 />
                 <button type="button" onClick={() => {
-                  if (!addAmt || Number(addAmt) <= 0) return;
-                  updateSaved(g.id, g.saved_amount + Number(addAmt));
-                  showToast(`✓ +${Mn.fmt(Number(addAmt))} a "${g.name}"`);
+                  if (!(parseARS(addAmt) > 0)) return;
+                  updateSaved(g.id, g.saved_amount + Math.round(parseARS(addAmt)));
+                  showToast(`✓ +${Mn.fmt(Math.round(parseARS(addAmt)))} a "${g.name}"`);
                   setAddingTo(null); setAddAmt('');
                 }} style={{ height:40,padding:'0 14px',borderRadius:8,border:'none',background:'#4ade80',color:'#0a0a12',fontSize:12,fontWeight:700,cursor:'pointer' }}>Agregar</button>
               </div>

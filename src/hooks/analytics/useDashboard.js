@@ -88,10 +88,6 @@ export function useDashboard() {
     [currentMonthExpenses, weekStartStr]
   );
 
-  // Daily average
-  const daysElapsed = new Date().getDate();
-  const dailyAvg = daysElapsed > 0 ? Math.round(gastosDiarios / daysElapsed) : 0;
-
   // Restante = disponible actual − total gastado del mes
   const restante = ingresoNeto - gastosDiarios;
 
@@ -179,6 +175,5 @@ export function useDashboard() {
     cards,
     todaySpent,
     weekSpent,
-    dailyAvg,
   };
 }

@@ -41,23 +41,34 @@ export function MesDetailPage({ month }) {
       </div>
 
       {/* Summary cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 14 }}>
-        <div style={cardStyle} data-testid="card-ingreso">
-          <div style={{ fontSize: 10, color: '#6c6c84', fontWeight: 600, textTransform: 'uppercase' }}>Ingreso Neto</div>
-          <div style={{ fontSize: 18, fontWeight: 800, color: '#2dd4a8', marginTop: 2 }}>{Mn.short(ingresoNeto)}</div>
-          <div style={{ fontSize: 9, color: '#5c5c72' }}>{Mn.fmt(ingresoNeto)}</div>
-        </div>
-        <div style={cardStyle} data-testid="card-gastado">
-          <div style={{ fontSize: 10, color: '#6c6c84', fontWeight: 600, textTransform: 'uppercase' }}>Gastado</div>
-          <div style={{ fontSize: 18, fontWeight: 800, color: '#f06070', marginTop: 2 }}>{Mn.short(totalExpenses)}</div>
-          <div style={{ fontSize: 9, color: '#5c5c72' }}>{expenses.length} gastos</div>
-        </div>
-        <div style={cardStyle} data-testid="card-disponible">
-          <div style={{ fontSize: 10, color: '#6c6c84', fontWeight: 600, textTransform: 'uppercase' }}>Disponible</div>
-          <div style={{ fontSize: 18, fontWeight: 800, color: disponible >= 0 ? '#2dd4a8' : '#f06070', marginTop: 2 }}>{Mn.short(disponible)}</div>
-          <div style={{ fontSize: 9, color: '#5c5c72' }}>{disponible >= 0 ? 'Sobrante' : 'Déficit'}</div>
-        </div>
-      </div>
+      {(() => {
+        const dispColor = disponible >= 0 ? '#2dd4a8' : '#f06070';
+        const cc = (c) => ({
+          background: `linear-gradient(135deg, ${c}12 0%, rgba(255,255,255,0.02) 100%)`,
+          borderRadius: 14, padding: '14px 16px',
+          border: `1px solid ${c}30`,
+          boxShadow: '0 2px 12px rgba(0,0,0,0.35)',
+        });
+        return (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 14 }}>
+            <div style={cc('#2dd4a8')} data-testid="card-ingreso">
+              <div style={{ fontSize: 10, color: '#2dd4a880', fontWeight: 600, textTransform: 'uppercase' }}>Ingreso Neto</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#2dd4a8', marginTop: 2 }}>{Mn.short(ingresoNeto)}</div>
+              <div style={{ fontSize: 9, color: '#5c5c72' }}>{Mn.fmt(ingresoNeto)}</div>
+            </div>
+            <div style={cc('#f0a848')} data-testid="card-gastado">
+              <div style={{ fontSize: 10, color: '#f0a84880', fontWeight: 600, textTransform: 'uppercase' }}>Gastado</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#f0a848', marginTop: 2 }}>{Mn.short(totalExpenses)}</div>
+              <div style={{ fontSize: 9, color: '#5c5c72' }}>{expenses.length} gastos</div>
+            </div>
+            <div style={cc(dispColor)} data-testid="card-disponible">
+              <div style={{ fontSize: 10, color: `${dispColor}80`, fontWeight: 600, textTransform: 'uppercase' }}>Disponible</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: dispColor, marginTop: 2 }}>{Mn.short(disponible)}</div>
+              <div style={{ fontSize: 9, color: '#5c5c72' }}>{disponible >= 0 ? 'Sobrante' : 'Déficit'}</div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Charts */}
       <style>{`

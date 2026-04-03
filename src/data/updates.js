@@ -6,6 +6,18 @@
  */
 export const UPDATES = [
   {
+    id: 'update-20260403-1',
+    date: '3 de abril de 2026 · 12:43 (ARG)',
+    title: 'Colores, rendimiento y mejoras en formularios',
+    items: [
+      'La app carga notablemente más rápido en todos los dispositivos.',
+      'El panel, las solapas de mes y el detalle de cada mes ahora tienen colores distintos en cada tarjeta, haciéndolos más fáciles de leer de un vistazo.',
+      'Los gráficos de torta muestran más colores distintos cuando hay muchas categorías.',
+      'Se quitaron la Proyección de cierre y el Promedio diario del panel porque no estaban calculando bien.',
+      'En Agregar, todos los campos de monto (presupuesto, metas de ahorro) ahora aceptan el formato argentino con punto como miles y coma como decimal. Por ejemplo: 50.000 o 50.000,50.',
+    ],
+  },
+  {
     id: 'update-20260401-2',
     date: '1 de abril de 2026 · 15:36 (ARG)',
     title: 'Perfil, cuotas corregidas, nuevo favicon y mejoras generales',

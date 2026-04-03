@@ -17,7 +17,7 @@ export function DashPage() {
   const {
     mo, sectionBarData, rubroData, rubroTotal,
     alerts, budgetEntries, incomeVsExpenseData, cards,
-    todaySpent, weekSpent, dailyAvg,
+    todaySpent, weekSpent,
   } = useDashboard();
   const { goals } = useSavingsGoals();
   const { data: cmp, loading: cmpLoading } = useMonthComparison();
@@ -53,8 +53,8 @@ export function DashPage() {
   function DashCard({ card: c }) {
     const [exp, setExp] = useState(false);
     return (
-      <div style={cardStyle} onClick={() => setExp(!exp)} title={c.f}>
-        <div style={{ fontSize:10,color:'#6c7280',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px' }}>{c.l}</div>
+      <div style={{ background:`linear-gradient(135deg,${c.c}12 0%,rgba(255,255,255,0.02) 100%)`,borderRadius:14,padding:'14px 16px',border:`1px solid ${c.c}30`,boxShadow:'0 2px 12px rgba(0,0,0,0.35)' }} onClick={() => setExp(!exp)} title={c.f}>
+        <div style={{ fontSize:10,color:`${c.c}90`,fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px' }}>{c.l}</div>
         <div style={{ fontSize:exp?13:26,fontWeight:800,color:c.c,letterSpacing:'-0.5px',margin:'4px 0 2px',cursor:'pointer',transition:'font-size .15s',fontVariantNumeric:'tabular-nums' }}>{exp?c.f:c.v}</div>
         <div style={{ fontSize:10,color:'#6c7280' }}>{c.s}</div>
       </div>
@@ -80,13 +80,12 @@ export function DashPage() {
       {/* Quick summary chips */}
       <div style={{ display:'flex',gap:8,marginBottom:12,flexWrap:'wrap' }}>
         {[
-          { l:'Hoy', v: Mn.fmt(todaySpent), c:'#6c7280' },
-          { l:'Esta semana', v: Mn.fmt(weekSpent), c:'#6c7280' },
-          { l:'Promedio diario', v: Mn.fmt(dailyAvg), c:'#6c7280' },
+          { l:'Hoy', v: Mn.fmt(todaySpent), c:'#7c6cf0' },
+          { l:'Esta semana', v: Mn.fmt(weekSpent), c:'#60a8f0' },
         ].map(chip => (
-          <div key={chip.l} style={{ background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.07)',borderRadius:10,padding:'7px 12px',display:'flex',flexDirection:'column',gap:2 }}>
-            <span style={{ fontSize:9,fontWeight:600,color:'#6c7280',textTransform:'uppercase',letterSpacing:'0.5px' }}>{chip.l}</span>
-            <span style={{ fontSize:14,fontWeight:700,color:'#e8e8f0',fontVariantNumeric:'tabular-nums' }}>{chip.v}</span>
+          <div key={chip.l} style={{ background:`linear-gradient(135deg,${chip.c}10 0%,rgba(255,255,255,0.02) 100%)`,border:`1px solid ${chip.c}28`,borderRadius:10,padding:'7px 12px',display:'flex',flexDirection:'column',gap:2 }}>
+            <span style={{ fontSize:9,fontWeight:600,color:`${chip.c}90`,textTransform:'uppercase',letterSpacing:'0.5px' }}>{chip.l}</span>
+            <span style={{ fontSize:14,fontWeight:700,color:chip.c,fontVariantNumeric:'tabular-nums' }}>{chip.v}</span>
           </div>
         ))}
       </div>
@@ -149,15 +148,15 @@ export function DashPage() {
         <style>{`.cmp-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}`}</style>
         <div className="cmp-grid">
           {[
-            { label: 'Ingresos',  key: 'income'   },
-            { label: 'Gastos',    key: 'expenses' },
-            { label: 'Balance',   key: 'balance'  },
-          ].map(({ label, key }) => {
+            { label: 'Ingresos',  key: 'income',    c:'#2dd4a8' },
+            { label: 'Gastos',    key: 'expenses',  c:'#f0a848' },
+            { label: 'Balance',   key: 'balance',   c:'#7c6cf0' },
+          ].map(({ label, key, c }) => {
             const val = cmp?.current?.[key]  ?? 0;
             const vrn = cmp?.variation?.[key] ?? 0;
             return (
-              <div key={key} style={{ background:'rgba(255,255,255,0.03)',borderRadius:10,padding:'10px 12px' }}>
-                <div style={{ fontSize:10,color:'#6c7280',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:4 }}>
+              <div key={key} style={{ background:`linear-gradient(135deg,${c}10 0%,rgba(255,255,255,0.02) 100%)`,borderRadius:10,padding:'10px 12px',border:`1px solid ${c}28` }}>
+                <div style={{ fontSize:10,color:`${c}90`,fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:4 }}>
                   {label}
                 </div>
                 {cmpLoading ? (

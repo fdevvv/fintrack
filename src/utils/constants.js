@@ -19,9 +19,11 @@ export const RUBRO_EMOJI = {
 export const DEFAULT_RUBROS = Object.keys(RUBRO_EMOJI);
 
 export const COLORS = [
-  '#7c6cf0','#2dd4a8','#f06070','#f0a848','#60a8f0','#e070b0',
-  '#a8a0f8','#40d8b0','#f0a080','#70d8d8','#b0b8c8','#707888',
-  '#e08060','#20b888','#e060a0','#3088e0',
+  '#7c6cf0','#2dd4a8','#f0a848','#60a8f0','#f06070','#e070b0',
+  '#a8a0f8','#40d8b0','#fbbf24','#38bdf8','#fb7185','#c084fc',
+  '#34d399','#f97316','#818cf8','#22d3ee','#e879f9','#4ade80',
+  '#facc15','#60a5fa','#f43f5e','#a78bfa','#10b981','#ff7849',
+  '#7dd3fc','#d946ef','#86efac','#fde68a','#93c5fd','#fca5a5',
 ];
 
 export const SUB_ICONS = {
