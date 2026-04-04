@@ -1,4 +1,5 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { inputStyle, cardStyle, tagStyle } from '@/utils/styles';
 import { SECTIONS, RUBRO_EMOJI, getSubIcon } from '@/utils/constants';
 
@@ -267,24 +268,31 @@ export function InstallmentDeleteModal({ show, item, onDeleteOne, onDeleteAll, o
 }
 
 /* ─── Item Icon ────────────────────────────────────────────────────────── */
-export function ItemIcon({ item }) {
+export function ItemIcon({ item, overrideEmoji, onClick }) {
   const catName = item.categories?.name || item.category_name || '';
-  if (catName === 'Suscripciones') {
+  if (!overrideEmoji && catName === 'Suscripciones') {
     const svg = getSubIcon(item.item_name);
     if (svg) return (
-      <div style={{ width:38,height:38,borderRadius:10,overflow:'hidden',flexShrink:0 }}
-        dangerouslySetInnerHTML={{ __html: svg }} />
+      <div
+        style={{ width:38,height:38,borderRadius:10,overflow:'hidden',flexShrink:0, cursor: onClick ? 'pointer' : 'default' }}
+        dangerouslySetInnerHTML={{ __html: svg }}
+        onClick={onClick}
+      />
     );
   }
   return (
-    <div style={{
-      width:38, height:38, borderRadius:10,
-      background:'rgba(255,255,255,0.06)',
-      border:'1px solid rgba(255,255,255,0.07)',
-      display:'flex', alignItems:'center', justifyContent:'center',
-      fontSize:19, flexShrink:0,
-    }}>
-      {RUBRO_EMOJI[catName] || item.categories?.icon || '📎'}
+    <div
+      onClick={onClick}
+      style={{
+        width:38, height:38, borderRadius:10,
+        background:'rgba(255,255,255,0.06)',
+        border: onClick ? '1px solid rgba(255,255,255,0.14)' : '1px solid rgba(255,255,255,0.07)',
+        display:'flex', alignItems:'center', justifyContent:'center',
+        fontSize:19, flexShrink:0,
+        cursor: onClick ? 'pointer' : 'default',
+      }}
+    >
+      {overrideEmoji || RUBRO_EMOJI[catName] || item.categories?.icon || '📎'}
     </div>
   );
 }
@@ -334,88 +342,97 @@ export function CuotaTag({ current, total }) {
 }
 
 /* ─── Emoji Picker ─────────────────────────────────────────────────────── */
-const EMOJI_OPTS = [
-  '🛒','👕','👗','👟','👜','💄','🧴','🧥','🎁','🛍️','🩴','👒','🕶️',
-  '🥩','🥬','🍕','🍔','🥗','🛵','☕','🍰','🍻','🥤','🧃','🍱','🥐','🌮',
-  '🚗','⛽','🚌','✈️','🚕','🚲','🛺','🚂','🚐',
-  '💊','🏥','🦷','🧘','🏋️','🩺','🧬','👓',
-  '🏠','💡','🔧','📦','🧹','🛁','🌿','🔑','🪴',
-  '🎮','🎬','🎵','📚','🎟️','⚽','🎲','🎯','🎸','🎤','🎨','🎭',
-  '💳','🏦','💰','💵','🪙','📈','📊','🔐','💹',
-  '🔌','📱','💻','🎧','📺','📰','🎓','📡','🖥️','⌚',
-  '🐕','🐱','👶','🌍',
-  '⭐','🌟','🎯','❓','📎','🗂️','🏆','🎪','🧩',
-];
-
 export function EmojiPicker({ value, onChange }) {
-  const [open,   setOpen]   = useState(false);
-  const [search, setSearch] = useState('');
-  const ref = useRef(null);
+  const [open, setOpen] = useState(false);
+  const [picker, setPicker] = useState(null);
+  const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 640;
 
   useEffect(() => {
-    if (!open) return;
-    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener('mousedown', h);
-    return () => document.removeEventListener('mousedown', h);
+    if (!open || picker) return;
+    Promise.all([
+      import('@emoji-mart/react'),
+      import('@emoji-mart/data'),
+    ]).then(([{ default: Picker }, { default: data }]) => {
+      setPicker({ Picker, data });
+    });
   }, [open]);
 
-  const filtered = search ? EMOJI_OPTS.filter(e => e.includes(search)) : EMOJI_OPTS;
+  // perLine en mobile se calcula para que el picker llene el ancho disponible
+  // emoji-mart usa 36px por botón + ~24px de padding interno
+  const mobilePerLine = typeof window !== 'undefined'
+    ? Math.max(6, Math.floor((window.innerWidth - 24) / 36))
+    : 8;
+
+  const pickerNode = picker ? (
+    <picker.Picker
+      data={picker.data}
+      onEmojiSelect={(e) => { onChange(e.native); setOpen(false); }}
+      theme="dark"
+      locale="es"
+      previewPosition="none"
+      skinTonePosition="none"
+      searchPosition="sticky"
+      maxFrequentRows={2}
+      perLine={isDesktop ? 9 : mobilePerLine}
+      set="native"
+    />
+  ) : (
+    <div style={{ fontSize:12, color:'#5c5c72', padding:24 }}>Cargando...</div>
+  );
 
   return (
-    <div ref={ref} style={{ position:'relative' }}>
-      <button type="button" onClick={() => setOpen(o => !o)} style={{
-        width:42, height:42, borderRadius:10,
-        border:`1.5px solid ${open ? 'rgba(129,140,248,0.5)' : 'rgba(255,255,255,0.09)'}`,
-        background: open ? 'rgba(99,102,241,0.08)' : 'rgba(255,255,255,0.05)',
-        fontSize:22, cursor:'pointer',
-        display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0,
-        transition:'all 0.15s',
-        boxShadow: open ? '0 0 0 3px rgba(99,102,241,0.1)' : 'none',
-      }}>
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        style={{
+          width:42, height:42, borderRadius:10,
+          border:`1.5px solid ${open ? 'rgba(129,140,248,0.5)' : 'rgba(255,255,255,0.09)'}`,
+          background: open ? 'rgba(99,102,241,0.08)' : 'rgba(255,255,255,0.05)',
+          fontSize:22, cursor:'pointer',
+          display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0,
+          transition:'all 0.15s',
+          boxShadow: open ? '0 0 0 3px rgba(99,102,241,0.1)' : 'none',
+        }}
+      >
         {value || '📎'}
       </button>
 
-      {open && (
-        <div style={{
-          position:'absolute', top:'calc(100% + 6px)', left:0, zIndex:300,
-          background:'#1c2030', border:'1px solid rgba(255,255,255,0.1)',
-          borderRadius:14, padding:10, width:272,
-          boxShadow:'0 16px 48px rgba(0,0,0,0.7)',
-        }}>
-          <input
-            autoFocus
-            placeholder="Buscar emoji..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            style={{
-              width:'100%', boxSizing:'border-box', marginBottom:8,
-              background:'rgba(255,255,255,0.05)',
+      {open && createPortal(
+        <>
+          <div onClick={() => setOpen(false)} style={{ position:'fixed', inset:0, zIndex:9999, background:'rgba(0,0,0,0.5)' }} />
+
+          {isDesktop ? (
+            /* Desktop: modal centrado */
+            <div style={{
+              position:'fixed', zIndex:10000,
+              top:'50%', left:'50%', transform:'translate(-50%, -50%)',
+              background:'#13131f', borderRadius:16,
+              border:'1px solid rgba(255,255,255,0.1)',
+              boxShadow:'0 24px 64px rgba(0,0,0,0.8)',
+              overflow:'hidden',
+            }}>
+              {pickerNode}
+            </div>
+          ) : (
+            /* Mobile: bottom sheet sobre la nav bar */
+            <div style={{
+              position:'fixed', bottom:'calc(63px + env(safe-area-inset-bottom, 0px))', left:0, right:0, zIndex:10000,
+              background:'#13131f', borderRadius:'20px 20px 0 0',
               border:'1px solid rgba(255,255,255,0.08)',
-              borderRadius:8, padding:'7px 10px',
-              fontSize:14, color:'#e2e8f0', outline:'none',
-              fontFamily:"'Inter', system-ui, sans-serif",
-            }}
-          />
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(8,1fr)',
-            gap:2, maxHeight:200, overflowY:'auto' }}>
-            {filtered.map(e => (
-              <button key={e} type="button"
-                onClick={() => { onChange(e); setOpen(false); setSearch(''); }}
-                style={{
-                  background: value === e ? 'rgba(99,102,241,0.3)' : 'transparent',
-                  border:'none', borderRadius:6, fontSize:19, padding:'4px 2px',
-                  cursor:'pointer', lineHeight:1, transition:'background 0.1s',
-                }}>
-                {e}
-              </button>
-            ))}
-            {filtered.length === 0 && (
-              <span style={{ gridColumn:'1/-1', fontSize:11, color:'#64748b',
-                padding:'8px 0', textAlign:'center' }}>Sin resultados</span>
-            )}
-          </div>
-        </div>
+              boxShadow:'0 -8px 40px rgba(0,0,0,0.5)',
+              maxHeight:'70vh', display:'flex', flexDirection:'column',
+            }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px 8px', flexShrink:0 }}>
+                <div style={{ fontSize:13, fontWeight:700, color:'#e8e8f0' }}>Elegir ícono</div>
+                <button onClick={() => setOpen(false)} style={{ background:'none', border:'none', color:'#6c6c84', fontSize:22, cursor:'pointer', lineHeight:1, padding:'0 4px' }}>×</button>
+              </div>
+              <div style={{ overflowY:'auto', flexGrow:1 }}>{pickerNode}</div>
+            </div>
+          )}
+        </>,
+        document.body
       )}
-    </div>
+    </>
   );
 }

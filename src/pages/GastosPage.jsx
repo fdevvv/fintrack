@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useStore } from '@/stores/useStore';
 import { useUiStore } from '@/stores/uiStore';
@@ -8,14 +8,97 @@ import { cardStyle, tooltipStyle, tooltipLabel, tooltipItem, tooltipWrapper, too
 import { exportToExcel } from '@/services/export.service';
 import { useTransactions } from '@/hooks/transactions/useTransactions';
 import { useDeleteTransaction } from '@/hooks/transactions/useDeleteTransaction';
+import { useItemIcons } from '@/hooks/useItemIcons';
 import { ST, MonthBar, ItemIcon, Pnl, ConfirmModal } from '@/components/ui/Shared';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 const METHODS = { cash:'Efectivo', transfer:'Transferencia', qr_debit:'QR', debit_card:'Débito' };
 
+function EmojiPicker({ itemName, current, onSelect, onClose }) {
+  const [picker, setPicker] = useState(null);
+  const isDesktop = window.innerWidth >= 640;
+
+  useEffect(() => {
+    Promise.all([
+      import('@emoji-mart/react'),
+      import('@emoji-mart/data'),
+    ]).then(([{ default: Picker }, { default: data }]) => {
+      setPicker({ Picker, data });
+    });
+  }, []);
+
+  const pickerNode = picker ? (
+    <picker.Picker
+      data={picker.data}
+      onEmojiSelect={(e) => onSelect(e.native)}
+      theme="dark"
+      locale="es"
+      previewPosition="none"
+      skinTonePosition="none"
+      searchPosition="sticky"
+      maxFrequentRows={2}
+      perLine={isDesktop ? 9 : 8}
+      set="native"
+    />
+  ) : (
+    <div style={{ fontSize:12, color:'#5c5c72', padding:24 }}>Cargando...</div>
+  );
+
+  const header = (
+    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px 8px', flexShrink:0 }}>
+      <div>
+        <div style={{ fontSize:13, fontWeight:700, color:'#e8e8f0' }}>Editar ícono</div>
+        <div style={{ fontSize:10, color:'#5c5c72', marginTop:2 }}>{itemName}</div>
+      </div>
+      <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+        {current && (
+          <button onClick={() => onSelect(null)} style={{ fontSize:10, color:'#f06070', background:'rgba(240,96,112,0.1)', border:'1px solid rgba(240,96,112,0.2)', borderRadius:6, padding:'5px 10px', cursor:'pointer' }}>
+            Restablecer
+          </button>
+        )}
+        <button onClick={onClose} style={{ background:'none', border:'none', color:'#6c6c84', fontSize:22, cursor:'pointer', lineHeight:1, padding:'0 4px' }}>×</button>
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position:'fixed', inset:0, zIndex:999, background:'rgba(0,0,0,0.5)' }} />
+      {isDesktop ? (
+        /* Desktop: modal centrado */
+        <div style={{
+          position:'fixed', zIndex:1000,
+          top:'50%', left:'50%', transform:'translate(-50%, -50%)',
+          background:'#13131f', borderRadius:16,
+          border:'1px solid rgba(255,255,255,0.1)',
+          boxShadow:'0 24px 64px rgba(0,0,0,0.8)',
+          overflow:'hidden',
+        }}>
+          {header}
+          {pickerNode}
+        </div>
+      ) : (
+        /* Mobile: bottom sheet sobre la nav bar */
+        <div style={{
+          position:'fixed', bottom:'calc(63px + env(safe-area-inset-bottom, 0px))', left:0, right:0, zIndex:1000,
+          background:'#13131f', borderRadius:'20px 20px 0 0',
+          border:'1px solid rgba(255,255,255,0.08)',
+          boxShadow:'0 -8px 40px rgba(0,0,0,0.5)',
+          maxHeight:'70vh', display:'flex', flexDirection:'column',
+        }}>
+          {header}
+          <div style={{ overflowY:'auto', display:'flex', justifyContent:'center' }}>{pickerNode}</div>
+        </div>
+      )}
+    </>
+  );
+}
+
 export function GastosPage() {
   const { income, year } = useStore();
   const { showToast } = useUiStore();
+  const { icons, setIcon } = useItemIcons();
+  const [editingIcon, setEditingIcon] = useState(null); // item_name being edited
   const [searchParams, setSearchParams] = useSearchParams();
   const [filterMethod, setFilterMethod] = useState('');
   const [localMonth, setLocalMonth] = useState(() => {
@@ -39,11 +122,19 @@ export function GastosPage() {
     sourceFilter: 'manual',
   });
 
-  // Total de todos los gastos del mes (incluye importados) — derivado sin segunda llamada al hook
+  // Total de todos los gastos del mes (incluye importados/tarjeta)
   const totalTodos = useMemo(() => {
     const moStr = String(localMonth + 1).padStart(2, '0');
     return transactions
       .filter(t => t.type === 'expense' && t.transaction_date.slice(5, 7) === moStr)
+      .reduce((s, t) => s + t.amount_cents, 0);
+  }, [transactions, localMonth]);
+
+  // Solo gastos manuales del mes (sin filtro de método — para el cálculo de Restante)
+  const manualTotal = useMemo(() => {
+    const moStr = String(localMonth + 1).padStart(2, '0');
+    return transactions
+      .filter(t => t.type === 'expense' && t.source === 'manual' && t.transaction_date.slice(5, 7) === moStr)
       .reduce((s, t) => s + t.amount_cents, 0);
   }, [transactions, localMonth]);
   const { remove } = useDeleteTransaction();
@@ -78,8 +169,9 @@ export function GastosPage() {
       {/* Summary cards */}
       {(() => {
         const inc = income[localMonth >= 0 ? localMonth : new Date().getMonth()] || 0;
-        const disponible = inc - totalTodos;
-        const rest = disponible - total;
+        const ccTotal = totalTodos - manualTotal;  // solo importados/tarjeta
+        const disponible = inc - ccTotal;           // ingreso − tarjeta = disponible para el día
+        const rest = disponible - manualTotal;      // lo que queda tras gastos manuales
         const cc = (c) => ({
           background: `linear-gradient(135deg, ${c}12 0%, rgba(255,255,255,0.02) 100%)`,
           borderRadius: 14, padding: '14px 16px',
@@ -158,7 +250,11 @@ export function GastosPage() {
         <div style={{ marginTop:8 }}>
           {filtered.map((t) => (
             <div key={t.id} style={{ display:'flex',alignItems:'center',gap:12,padding:'10px 0',borderBottom:'1px solid rgba(255,255,255,0.04)' }}>
-              <ItemIcon item={t} />
+              <ItemIcon
+                item={t}
+                overrideEmoji={icons[t.item_name]}
+                onClick={() => setEditingIcon(t.item_name)}
+              />
               <div style={{ flex:1,minWidth:0 }}>
                 <div style={{ fontSize:13,fontWeight:600,color:'#e8e8f0',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{t.item_name||t.description||'Sin nombre'}</div>
                 <div style={{ fontSize:10,color:'#5c5c72',marginTop:2 }}>
@@ -181,6 +277,15 @@ export function GastosPage() {
         }} style={{ width:'100%',padding:'10px',borderRadius:10,border:'1px solid rgba(45,212,168,0.2)',background:'rgba(45,212,168,0.06)',color:'#2dd4a8',fontSize:12,fontWeight:600,cursor:'pointer',marginTop:8 }}>
           📊 Exportar Gastos del Mes a Excel
         </button>
+      )}
+
+      {editingIcon && (
+        <EmojiPicker
+          itemName={editingIcon}
+          current={icons[editingIcon]}
+          onSelect={(emoji) => { setIcon(editingIcon, emoji); setEditingIcon(null); }}
+          onClose={() => setEditingIcon(null)}
+        />
       )}
 
       <ConfirmModal show={!!delTarget} title="Eliminar" message={delTarget?`¿Eliminar "${delTarget.item_name}"?`:''} onConfirm={async()=>{if(delTarget){await remove(delTarget.id);showToast('✓ Eliminado');}setDelTarget(null);}} onCancel={()=>setDelTarget(null)} />

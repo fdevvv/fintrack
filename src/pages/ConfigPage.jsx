@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '@/stores/useStore';
 import { useUiStore } from '@/stores/uiStore';
-import { RUBRO_EMOJI, SECTIONS } from '@/utils/constants';
+import { SECTIONS } from '@/utils/constants';
 import { cardStyle, inputStyle } from '@/utils/styles';
 import { categoriesService } from '@/services/categories.service';
-import { exportToExcel } from '@/services/export.service';
 import { ST, Btn, Inp, ConfirmModal, EmojiPicker } from '@/components/ui/Shared';
 
 export function ConfigPage() {
@@ -125,10 +124,7 @@ export function ConfigPage() {
 
       <div style={{ ...cardStyle, padding: 16, marginBottom: 16 }}>
         {userSections.length === 0 && (
-          <p style={{ fontSize: 12, color: '#5c5c72', marginBottom: 8 }}>Sin secciones guardadas.</p>
-        )}
-        {userSections.length === 0 && (
-          <p style={{ fontSize:12, color:'#5c5c72' }}>No hay secciones creadas todavía.</p>
+          <p style={{ fontSize: 12, color: '#5c5c72' }}>No hay secciones creadas todavía.</p>
         )}
         {userSections.map(s => (
           <div key={s.key} style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 0', borderBottom:'1px solid rgba(255,255,255,0.04)' }}>
