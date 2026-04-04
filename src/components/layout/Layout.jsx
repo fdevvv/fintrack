@@ -298,6 +298,9 @@ export function TopBar({ year, years, setYear, syncing, onSignOut, onNav }) {
         backdropFilter:'blur(20px)',
         borderBottom:'1px solid rgba(255,255,255,0.06)',
         position:'fixed', top:0, left:0, right:0, zIndex:50,
+        WebkitTransform:'translateZ(0)',
+        transform:'translateZ(0)',
+        willChange:'transform',
       }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
           {/* Profile / branding */}
@@ -416,8 +419,11 @@ export function MobileNav({ active, onNav, isAdmin }) {
       borderTop:'1px solid rgba(255,255,255,0.07)',
       justifyContent:'space-around',
       padding:'6px 0',
-      paddingBottom:'calc(env(safe-area-inset-bottom, 6px) + 6px)',
+      paddingBottom:'calc(env(safe-area-inset-bottom, 0px) + 6px)',
       zIndex:100,
+      WebkitTransform:'translateZ(0)',
+      transform:'translateZ(0)',
+      willChange:'transform',
     }}>
       {[...mobileNavs, ...(isAdmin ? [ADMIN_NAV] : [])].map(n => {
         const isActive = active === n.id;

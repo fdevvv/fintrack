@@ -7,7 +7,7 @@ export const inputStyle = {
   border: '1px solid rgba(255,255,255,0.09)',
   background: 'rgba(255,255,255,0.05)',
   color: '#e2e8f0',
-  fontSize: 15,
+  fontSize: 16,
   fontFamily: "'Inter', system-ui, sans-serif",
   outline: 'none',
   boxSizing: 'border-box',
