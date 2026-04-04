@@ -7,7 +7,7 @@
 export const UPDATES = [
   {
     id: 'update-20260403-2',
-    date: '3 de abril de 2026 · 21:00 (ARG)',
+    date: '3 de abril de 2026 · 22:42 (ARG)',
     title: 'Nueva interfaz: diseño renovado en toda la app',
     items: [
       'La app tiene un nuevo diseño más limpio, moderno y cómodo de usar en celular y computadora.',
