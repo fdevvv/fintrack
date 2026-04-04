@@ -143,7 +143,7 @@ export default function App() {
       case 'dolar': return <DolarPage />;
       case 'cfg': return <ConfigPage />;
       case 'perfil': return <ProfilePage />;
-      case 'admin': return profile?.email === 'foschi246@gmail.com' ? <AdminPage /> : <DashPage />;
+      case 'admin': return session.user.email === 'foschi246@gmail.com' ? <AdminPage /> : <DashPage />;
       default: return <DashPage />;
     }
   };
