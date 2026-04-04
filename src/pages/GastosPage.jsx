@@ -231,8 +231,12 @@ export function GastosPage() {
                 <XAxis dataKey="name" tick={{fill:'#8888a0',fontSize:9}} axisLine={false} tickLine={false} />
                 <YAxis tick={{fill:'#8888a0',fontSize:9}} axisLine={false} tickLine={false} tickFormatter={Mn.short} />
                 <Tooltip contentStyle={ttS} labelStyle={tooltipLabel} itemStyle={tooltipItem} wrapperStyle={tooltipWrapper} cursor={tooltipCursor} formatter={(v,name)=>[Mn.fmt(v),name]} />
-                <Bar dataKey={MONTHS[localMonth>=0?localMonth:new Date().getMonth()]} fill="#7c6cf0" radius={[4,4,0,0]} />
-                <Bar dataKey={MONTHS[(localMonth>=0?localMonth:new Date().getMonth())===0?11:(localMonth>=0?localMonth:new Date().getMonth())-1]} fill="#f0a848" radius={[4,4,0,0]} />
+                <Bar dataKey={MONTHS[localMonth>=0?localMonth:new Date().getMonth()]} radius={[4,4,0,0]}>
+                  {compData.map((_,i) => <Cell key={i} fill={COLORS[i%COLORS.length]} />)}
+                </Bar>
+                <Bar dataKey={MONTHS[(localMonth>=0?localMonth:new Date().getMonth())===0?11:(localMonth>=0?localMonth:new Date().getMonth())-1]} radius={[4,4,0,0]}>
+                  {compData.map((_,i) => <Cell key={i} fill={COLORS[i%COLORS.length]+'55'} />)}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </Pnl>
