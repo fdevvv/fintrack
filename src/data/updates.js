@@ -6,6 +6,21 @@
  */
 export const UPDATES = [
   {
+    id: 'update-20260403-2',
+    date: '3 de abril de 2026 · 21:00 (ARG)',
+    title: 'Nueva interfaz: diseño renovado en toda la app',
+    items: [
+      'La app tiene un nuevo diseño más limpio, moderno y cómodo de usar en celular y computadora.',
+      'Nueva tipografía más legible en todos los tamaños de pantalla.',
+      'Los colores de toda la app se unificaron: fondo más oscuro y profundo, con acentos en violeta/índigo que dan una apariencia más premium.',
+      'La barra de navegación inferior en celular tiene un nuevo estilo con íconos más claros y una indicación visual más visible de en qué sección estás.',
+      'El menú lateral en computadora se renovó: íconos propios para cada sección, año con su propio recuadro y mejor jerarquía visual.',
+      'Las tarjetas de resumen en el Panel se ven más ordenadas, con el valor grande bien destacado.',
+      'Los botones, campos de texto y selectores tienen un diseño más consistente con mejor feedback al tocarlos.',
+      'La pantalla de carga mejoró con la nueva identidad visual.',
+    ],
+  },
+  {
     id: 'update-20260403-1',
     date: '3 de abril de 2026 · 12:43 (ARG)',
     title: 'Colores, rendimiento y mejoras en formularios',

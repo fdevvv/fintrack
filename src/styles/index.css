@@ -1,68 +1,185 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --bg-primary: #0c0c18;
-  --bg-secondary: #141428;
-  --bg-card: rgba(255,255,255,0.06);
-  --bg-card-hover: rgba(255,255,255,0.08);
-  --bg-input: rgba(255,255,255,0.06);
-  --border: rgba(255,255,255,0.11);
-  --border-hover: rgba(255,255,255,0.18);
-  --text-primary: #e8e8f0;
-  --text-secondary: #9090a8;
-  --text-muted: #7e8899;
-  --text-dim: #7e8899;
-  --accent-purple: #7c6cf0;
-  --accent-green: #2dd4a8;
-  --accent-green-vivid: #4ade80;
-  --accent-red: #f06070;
-  --accent-orange: #fbbf24;
-  --accent-blue: #60a8f0;
-  --accent-pink: #e070b0;
+  /* Backgrounds — escalados de más oscuro a más claro */
+  --bg-base:     #09090f;
+  --bg-elevated: #111219;
+  --bg-surface:  #161824;
+  --bg-overlay:  #1c2030;
+  --bg-muted:    rgba(255,255,255,0.04);
+  --bg-hover:    rgba(255,255,255,0.06);
+
+  /* Borders */
+  --border-subtle:  rgba(255,255,255,0.05);
+  --border-default: rgba(255,255,255,0.09);
+  --border-strong:  rgba(255,255,255,0.15);
+
+  /* Text */
+  --text-primary:   #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted:     #64748b;
+  --text-dim:       #475569;
+
+  /* Accent — Indigo premium */
+  --accent-primary:   #818cf8;
+  --accent-primary-dim: rgba(99,102,241,0.15);
+  --accent-primary-border: rgba(129,140,248,0.3);
+
+  /* Semantic */
+  --accent-success:        #34d399;
+  --accent-success-dim:    rgba(52,211,153,0.12);
+  --accent-success-border: rgba(52,211,153,0.3);
+
+  --accent-danger:        #f87171;
+  --accent-danger-dim:    rgba(248,113,113,0.12);
+  --accent-danger-border: rgba(248,113,113,0.3);
+
+  --accent-warning:        #fbbf24;
+  --accent-warning-dim:    rgba(251,191,36,0.12);
+  --accent-warning-border: rgba(251,191,36,0.3);
+
+  --accent-info:        #60a5fa;
+  --accent-info-dim:    rgba(96,165,250,0.12);
+  --accent-info-border: rgba(96,165,250,0.3);
+
+  /* Legado — mantenidos para retrocompatibilidad */
+  --bg-primary:           #09090f;
+  --bg-secondary:         #111219;
+  --bg-card:              rgba(255,255,255,0.04);
+  --bg-card-hover:        rgba(255,255,255,0.06);
+  --bg-input:             rgba(255,255,255,0.05);
+  --border:               rgba(255,255,255,0.09);
+  --border-hover:         rgba(255,255,255,0.15);
+  --text-dim:             #64748b;
+  --accent-purple:        #818cf8;
+  --accent-green:         #34d399;
+  --accent-green-vivid:   #34d399;
+  --accent-red:           #f87171;
+  --accent-orange:        #fbbf24;
+  --accent-blue:          #60a5fa;
+  --accent-pink:          #f472b6;
 }
 
 @layer base {
   * { -webkit-tap-highlight-color: transparent; }
+
   body {
     @apply antialiased;
-    background: var(--bg-primary);
+    background: var(--bg-base);
     color: var(--text-primary);
-    font-family: 'DM Sans', system-ui, sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-feature-settings: 'cv02','cv03','cv04','cv11';
+    -webkit-font-smoothing: antialiased;
   }
+
   html { scroll-behavior: smooth; }
-  ::-webkit-scrollbar { width: 5px; height: 5px; }
+
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.08);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.14);
+  }
+
   input, select, textarea {
     color: var(--text-primary) !important;
     background: var(--bg-input) !important;
-    border-color: var(--border) !important;
+    border-color: var(--border-default) !important;
+    font-family: 'Inter', system-ui, sans-serif !important;
   }
-  input::placeholder, textarea::placeholder { color: var(--text-muted); }
-  select option { background: #1a1a2e; color: var(--text-primary); }
+  input::placeholder, textarea::placeholder {
+    color: var(--text-muted);
+  }
+  select option {
+    background: #161824;
+    color: var(--text-primary);
+  }
 }
 
 @layer components {
   .card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 14px 16px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    border-radius: 12px;
+    padding: 16px;
   }
-  .animate-in { animation: animateIn 200ms ease-out; }
+
+  .card-interactive {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    border-radius: 12px;
+    padding: 16px;
+    transition: border-color 0.15s, background 0.15s;
+    cursor: pointer;
+  }
+  .card-interactive:hover {
+    background: var(--bg-surface);
+    border-color: var(--border-strong);
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-family: 'Inter', system-ui, sans-serif;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-primary:active { transform: scale(0.98); }
+
+  .animate-in {
+    animation: animateIn 200ms ease-out;
+  }
+
   @keyframes animateIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
+
   @keyframes slideUp {
-    from { opacity: 0; transform: translateY(16px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
-  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.5; }
+  }
+
+  @keyframes shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  .skeleton {
+    background: linear-gradient(90deg,
+      rgba(255,255,255,0.04) 0%,
+      rgba(255,255,255,0.08) 50%,
+      rgba(255,255,255,0.04) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 6px;
+  }
 }
 
 @media print {

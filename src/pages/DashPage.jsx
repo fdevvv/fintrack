@@ -1,18 +1,222 @@
 import { useState } from 'react';
 import { SECTIONS, COLORS, MONTHS, RUBRO_EMOJI } from '@/utils/constants';
 import { Mn } from '@/utils/money';
-import { cardStyle, tooltipStyle, tooltipLabel, tooltipItem, tooltipWrapper, tooltipCursor } from '@/utils/styles';
+import { tooltipStyle, tooltipLabel, tooltipItem, tooltipWrapper, tooltipCursor } from '@/utils/styles';
 import { useDashboard } from '@/hooks/analytics/useDashboard';
 import { useMonthComparison } from '@/hooks/analytics/useMonthComparison';
 import { useMonthlyIncome } from '@/hooks/income/useMonthlyIncome';
 import { useSavingsGoals } from '@/hooks/savings/useSavingsGoals';
 import { MonthlyIncomeHistory } from '@/components/income/MonthlyIncomeHistory';
-import { Pnl } from '@/components/ui/Shared';
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts';
 
+/* ─── Stat Card ────────────────────────────────────────────────────────── */
+function StatCard({ card: c }) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <div
+      onClick={() => setExpanded(e => !e)}
+      title={c.f}
+      style={{
+        background: '#111219',
+        borderRadius: 12,
+        padding: '14px 16px',
+        border: `1px solid ${c.c}25`,
+        boxShadow: `0 1px 3px rgba(0,0,0,0.4), inset 0 0 0 1px ${c.c}08`,
+        cursor: 'pointer',
+        transition: 'border-color 0.15s',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = `${c.c}45`; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = `${c.c}25`; }}
+    >
+      {/* Subtle accent glow top-left */}
+      <div style={{ position:'absolute',top:0,left:0,width:40,height:40,
+        borderRadius:'0 0 40px 0',
+        background:`radial-gradient(circle at 0 0, ${c.c}18 0%, transparent 70%)`,
+        pointerEvents:'none' }} />
+
+      <div style={{ fontSize:10,color:`${c.c}`,fontWeight:600,
+        textTransform:'uppercase',letterSpacing:'0.6px',marginBottom:8,
+        opacity:0.7 }}>
+        {c.l}
+      </div>
+      <div style={{
+        fontSize: expanded ? 13 : 24,
+        fontWeight: 800, color: c.c,
+        letterSpacing: expanded ? 0 : '-0.5px',
+        marginBottom: 4,
+        cursor: 'pointer',
+        transition: 'font-size 0.15s',
+        fontVariantNumeric: 'tabular-nums',
+        lineHeight: 1.1,
+      }}>
+        {expanded ? c.f : c.v}
+      </div>
+      <div style={{ fontSize:10,color:'#475569',fontWeight:500 }}>{c.s}</div>
+    </div>
+  );
+}
+
+/* ─── Quick chip ────────────────────────────────────────────────────────── */
+function QuickChip({ label, value, color }) {
+  return (
+    <div style={{
+      background: '#111219',
+      border: `1px solid ${color}20`,
+      borderRadius: 10,
+      padding: '8px 14px',
+      display: 'flex', flexDirection: 'column', gap: 3,
+      minWidth: 90,
+    }}>
+      <span style={{ fontSize:9,fontWeight:600,color:'#475569',
+        textTransform:'uppercase',letterSpacing:'0.5px' }}>{label}</span>
+      <span style={{ fontSize:15,fontWeight:700,color,
+        fontVariantNumeric:'tabular-nums',letterSpacing:'-0.3px' }}>{value}</span>
+    </div>
+  );
+}
+
+/* ─── Comparison cell ───────────────────────────────────────────────────── */
+function CmpCell({ label, value, variation, color, loading }) {
+  const varColor = variation > 0 ? '#34d399' : variation < 0 ? '#f87171' : '#475569';
+  const varLabel = variation === 0 ? '—' : (variation > 0 ? '↑ +' : '↓ ') + Math.abs(variation) + '%';
+  return (
+    <div style={{
+      background: '#111219',
+      borderRadius: 10,
+      padding: '12px 14px',
+      border: `1px solid ${color}20`,
+    }}>
+      <div style={{ fontSize:10,color:`${color}`,fontWeight:600,
+        textTransform:'uppercase',letterSpacing:'0.6px',marginBottom:6,opacity:0.7 }}>
+        {label}
+      </div>
+      {loading ? (
+        <>
+          <div style={{ height:18,borderRadius:4,background:'rgba(255,255,255,0.06)',marginBottom:6 }} />
+          <div style={{ height:11,width:'50%',borderRadius:3,background:'rgba(255,255,255,0.04)' }} />
+        </>
+      ) : (
+        <>
+          <div style={{ fontSize:15,fontWeight:800,color:'#e2e8f0',marginBottom:3,
+            letterSpacing:'-0.3px',fontVariantNumeric:'tabular-nums' }}>
+            {Mn.fmt(value)}
+          </div>
+          <div style={{ fontSize:11,fontWeight:600,color:varColor }}>{varLabel}</div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ─── Alert Banner ──────────────────────────────────────────────────────── */
+function AlertBanner({ type, message }) {
+  const cfg = {
+    danger:  { bg:'rgba(248,113,113,0.08)', border:'rgba(248,113,113,0.2)', color:'#f87171', icon:'🚨' },
+    warning: { bg:'rgba(251,191,36,0.08)',  border:'rgba(251,191,36,0.2)',  color:'#fbbf24', icon:'⚠️' },
+    info:    { bg:'rgba(129,140,248,0.08)', border:'rgba(129,140,248,0.2)', color:'#818cf8', icon:'💡' },
+  }[type] || {};
+  return (
+    <div style={{
+      padding:'9px 14px', borderRadius:10, fontSize:12, fontWeight:500,
+      marginBottom:6, background:cfg.bg, color:cfg.color,
+      border:`1px solid ${cfg.border}`,
+      display:'flex', alignItems:'flex-start', gap:8, lineHeight:1.5,
+    }}>
+      <span style={{ flexShrink:0 }}>{cfg.icon}</span>
+      <span>{message}</span>
+    </div>
+  );
+}
+
+/* ─── Section label ─────────────────────────────────────────────────────── */
+function SectionLabel({ children, action }) {
+  return (
+    <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',
+      marginBottom:10,marginTop:20 }}>
+      <span style={{ fontSize:12,fontWeight:700,color:'#64748b',
+        textTransform:'uppercase',letterSpacing:'0.8px' }}>
+        {children}
+      </span>
+      {action}
+    </div>
+  );
+}
+
+/* ─── Budget row ────────────────────────────────────────────────────────── */
+function BudgetRow({ b, isLast }) {
+  const pctColor = b.pct > 100 ? '#f87171' : b.pct > 80 ? '#fbbf24' : '#34d399';
+  return (
+    <div style={{ marginBottom: isLast ? 0 : 14 }}>
+      <div style={{ display:'flex',justifyContent:'space-between',
+        alignItems:'center',marginBottom:6 }}>
+        <span style={{ fontSize:12,fontWeight:600,color:'#e2e8f0',
+          display:'flex',alignItems:'center',gap:6 }}>
+          {RUBRO_EMOJI[b.rubro]||'📎'}
+          <span>{b.rubro}</span>
+        </span>
+        <div style={{ display:'flex',alignItems:'center',gap:8 }}>
+          <span style={{ fontSize:11,color:'#64748b',fontVariantNumeric:'tabular-nums' }}>
+            {Mn.fmt(b.spent)} / {Mn.fmt(b.limit)}
+          </span>
+          <span style={{ fontSize:10,fontWeight:700,color:pctColor,
+            background:`${pctColor}15`, padding:'1px 6px',borderRadius:20 }}>
+            {Math.round(b.pct)}%
+          </span>
+        </div>
+      </div>
+      <div style={{ height:5,borderRadius:99,background:'rgba(255,255,255,0.06)',overflow:'hidden' }}>
+        <div style={{ height:'100%',borderRadius:99,width:`${Math.min(b.pct,100)}%`,
+          background:pctColor,transition:'width 0.6s ease-out' }} />
+      </div>
+    </div>
+  );
+}
+
+/* ─── Savings goal row ─────────────────────────────────────────────────── */
+function GoalRow({ g, isLast }) {
+  const pct = g.target_amount > 0
+    ? Math.min((g.saved_amount / g.target_amount) * 100, 100) : 0;
+  const done = pct >= 100;
+  return (
+    <div style={{ marginBottom: isLast ? 0 : 16 }}>
+      <div style={{ display:'flex',justifyContent:'space-between',
+        alignItems:'center',marginBottom:6 }}>
+        <div style={{ display:'flex',alignItems:'center',gap:8 }}>
+          <div style={{ width:28,height:28,borderRadius:8,
+            background: done ? 'rgba(52,211,153,0.15)' : 'rgba(129,140,248,0.12)',
+            display:'flex',alignItems:'center',justifyContent:'center',fontSize:14 }}>
+            {done ? '✅' : '🎯'}
+          </div>
+          <div>
+            <div style={{ fontSize:12,fontWeight:600,color:'#e2e8f0' }}>{g.name}</div>
+            {g.deadline && (
+              <div style={{ fontSize:10,color:'#475569' }}>Meta: {g.deadline}</div>
+            )}
+          </div>
+        </div>
+        <span style={{ fontSize:11,fontWeight:700,
+          color: done ? '#34d399' : '#94a3b8',
+          fontVariantNumeric:'tabular-nums' }}>
+          {Mn.fmt(g.saved_amount)} / {Mn.fmt(g.target_amount)}
+        </span>
+      </div>
+      <div style={{ height:5,borderRadius:99,background:'rgba(255,255,255,0.06)',overflow:'hidden' }}>
+        <div style={{ height:'100%',borderRadius:99,width:`${pct}%`,
+          background: done ? '#34d399' : 'linear-gradient(90deg,#6366f1,#818cf8)',
+          transition:'width 0.6s ease-out' }} />
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DASH PAGE
+═══════════════════════════════════════════════════════════════════════════ */
 export function DashPage() {
   const {
     mo, sectionBarData, rubroData, rubroTotal,
@@ -25,14 +229,14 @@ export function DashPage() {
 
   // Monthly income editor
   const now      = new Date();
-  const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const monthKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   const { income: incomeValue, loading: incLoading, updateIncome } = useMonthlyIncome(monthKey);
   const [isEditing, setIsEditing] = useState(false);
   const [inputVal,  setInputVal]  = useState('');
 
   const fmtMoney = n => {
-    const safe = isFinite(n) && !isNaN(n) ? Math.max(0, n) : 0;
-    return '$' + safe.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const safe = isFinite(n) && !isNaN(n) ? Math.max(0,n) : 0;
+    return '$' + safe.toLocaleString('es-AR', { minimumFractionDigits:2, maximumFractionDigits:2 });
   };
   const startEdit  = () => { setInputVal(String(incomeValue || '')); setIsEditing(true); };
   const cancelEdit = () => setIsEditing(false);
@@ -47,232 +251,238 @@ export function DashPage() {
     if (e.key === 'Escape') cancelEdit();
   };
 
-  const varColor = v => v > 0 ? '#2dd4a8' : v < 0 ? '#f06070' : '#6c7280';
-  const varLabel = v => v === 0 ? '—' : (v > 0 ? '+' : '') + v + '%';
-
-  function DashCard({ card: c }) {
-    const [exp, setExp] = useState(false);
-    return (
-      <div style={{ background:`linear-gradient(135deg,${c.c}12 0%,rgba(255,255,255,0.02) 100%)`,borderRadius:14,padding:'14px 16px',border:`1px solid ${c.c}30`,boxShadow:'0 2px 12px rgba(0,0,0,0.35)' }} onClick={() => setExp(!exp)} title={c.f}>
-        <div style={{ fontSize:10,color:`${c.c}90`,fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px' }}>{c.l}</div>
-        <div style={{ fontSize:exp?13:26,fontWeight:800,color:c.c,letterSpacing:'-0.5px',margin:'4px 0 2px',cursor:'pointer',transition:'font-size .15s',fontVariantNumeric:'tabular-nums' }}>{exp?c.f:c.v}</div>
-        <div style={{ fontSize:10,color:'#6c7280' }}>{c.s}</div>
-      </div>
-    );
-  }
+  const prevMonth = MONTHS[mo === 0 ? 11 : mo - 1];
 
   return (
-    <div style={{ padding:'0 16px',maxWidth:1000,margin:'0 auto' }}>
+    <div style={{ padding:'0 16px', maxWidth:980, margin:'0 auto' }}>
       <style>{`
-        .dash-cards { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
-        .dash-charts { display:flex; flex-direction:column; gap:14px; }
+        .dash-kpi  { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px; }
+        .dash-cmp  { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+        .dash-charts { display:flex; flex-direction:column; gap:12px; }
         @media (min-width:768px) {
-          .dash-cards { grid-template-columns:repeat(4,1fr); }
-          .dash-charts { display:grid; grid-template-columns:1fr 1fr; }
+          .dash-kpi    { grid-template-columns:repeat(4,1fr); gap:10px; }
+          .dash-charts { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
         }
       `}</style>
 
-      {/* Summary cards */}
-      <div className="dash-cards">
-        {cards.map((c,i) => <DashCard key={i} card={c} />)}
+      {/* ── KPI Cards ── */}
+      <SectionLabel>{MONTHS[mo]} · resumen</SectionLabel>
+      <div className="dash-kpi">
+        {cards.map((c,i) => <StatCard key={i} card={c} />)}
       </div>
 
-      {/* Quick summary chips */}
-      <div style={{ display:'flex',gap:8,marginBottom:12,flexWrap:'wrap' }}>
-        {[
-          { l:'Hoy', v: Mn.fmt(todaySpent), c:'#7c6cf0' },
-          { l:'Esta semana', v: Mn.fmt(weekSpent), c:'#60a8f0' },
-        ].map(chip => (
-          <div key={chip.l} style={{ background:`linear-gradient(135deg,${chip.c}10 0%,rgba(255,255,255,0.02) 100%)`,border:`1px solid ${chip.c}28`,borderRadius:10,padding:'7px 12px',display:'flex',flexDirection:'column',gap:2 }}>
-            <span style={{ fontSize:9,fontWeight:600,color:`${chip.c}90`,textTransform:'uppercase',letterSpacing:'0.5px' }}>{chip.l}</span>
-            <span style={{ fontSize:14,fontWeight:700,color:chip.c,fontVariantNumeric:'tabular-nums' }}>{chip.v}</span>
-          </div>
-        ))}
+      {/* ── Quick chips ── */}
+      <div style={{ display:'flex', gap:8, marginBottom:4, flexWrap:'wrap' }}>
+        <QuickChip label="Hoy"         value={Mn.fmt(todaySpent)} color="#818cf8" />
+        <QuickChip label="Esta semana" value={Mn.fmt(weekSpent)}  color="#60a5fa" />
       </div>
 
-      {/* Monthly income editor */}
-      <Pnl title={`Ingreso ${MONTHS[mo]}`}>
+      {/* ── Alerts ── */}
+      {alerts.length > 0 && (
+        <div style={{ marginTop:12 }}>
+          {alerts.map((a,i) => (
+            <AlertBanner key={i} type={a.t} message={a.m} />
+          ))}
+        </div>
+      )}
+
+      {/* ── Income editor ── */}
+      <SectionLabel>Ingreso {MONTHS[mo]}</SectionLabel>
+      <div style={{ background:'#111219',borderRadius:12,padding:'16px',
+        border:'1px solid rgba(255,255,255,0.08)',marginBottom:4 }}>
         {incLoading && !isEditing ? (
-          <div className="flex items-center justify-between">
-            <div className="h-8 w-40 rounded-lg bg-white/5 animate-pulse" />
-            <div className="h-8 w-9 rounded-lg bg-white/[0.03] animate-pulse" />
+          <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between' }}>
+            <div style={{ height:32,width:160,borderRadius:8,
+              background:'rgba(255,255,255,0.05)',animation:'pulse 1.5s infinite' }} />
+            <div style={{ height:32,width:36,borderRadius:8,
+              background:'rgba(255,255,255,0.03)',animation:'pulse 1.5s infinite' }} />
           </div>
         ) : isEditing ? (
-          <div className="flex items-center gap-2">
+          <div style={{ display:'flex',alignItems:'center',gap:8 }}>
             <input
-              type="number"
-              value={inputVal}
+              type="number" value={inputVal}
               onChange={e => setInputVal(e.target.value)}
-              onKeyDown={handleKey}
-              autoFocus
-              min="0"
-              step="1"
-              placeholder="0"
-              className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-lg font-bold text-[#e8e8f0] outline-none focus:border-[#7c6cf0] transition-colors"
+              onKeyDown={handleKey} autoFocus min="0" step="1" placeholder="0"
+              style={{ flex:1,background:'rgba(255,255,255,0.05)',
+                border:'1px solid rgba(129,140,248,0.4)',
+                boxShadow:'0 0 0 3px rgba(99,102,241,0.1)',
+                borderRadius:10,padding:'9px 14px',
+                fontSize:18,fontWeight:700,color:'#e2e8f0',outline:'none',
+                fontVariantNumeric:'tabular-nums',
+                fontFamily:"'Inter',system-ui,sans-serif" }}
             />
-            <button
-              onClick={handleSave}
-              disabled={incLoading}
-              className="px-4 py-2 rounded-lg text-sm font-bold bg-[#22c55e] text-[#0a0a12] disabled:opacity-50 cursor-pointer transition-opacity"
-            >
-              {incLoading ? '…' : '✓'}
-            </button>
-            <button
-              onClick={cancelEdit}
-              className="px-3 py-2 rounded-lg text-sm bg-white/5 text-[#6c7280] cursor-pointer hover:text-[#e8e8f0] transition-colors"
-            >
-              ✕
-            </button>
+            <button onClick={handleSave} disabled={incLoading} style={{
+              padding:'9px 16px',borderRadius:10,border:'none',
+              background:'linear-gradient(135deg,#059669,#34d399)',
+              color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer',
+              opacity:incLoading?0.5:1,
+            }}>{incLoading ? '…' : '✓'}</button>
+            <button onClick={cancelEdit} style={{
+              padding:'9px 12px',borderRadius:10,
+              border:'1px solid rgba(255,255,255,0.08)',background:'transparent',
+              color:'#64748b',fontSize:13,cursor:'pointer',
+            }}>✕</button>
           </div>
         ) : (
-          <div className="flex items-center justify-between">
-            <span style={{ fontSize:30,fontWeight:800,color:'#2dd4a8',letterSpacing:'-0.5px',fontVariantNumeric:'tabular-nums' }}>
-              {fmtMoney(incomeValue)}
-            </span>
-            <button
-              onClick={startEdit}
-              className="px-3 py-1.5 rounded-lg border border-white/10 bg-white/[0.04] text-[#6c7280] text-sm cursor-pointer hover:text-[#e8e8f0] transition-colors"
-              title="Editar ingreso mensual"
-            >
+          <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between' }}>
+            <div>
+              <div style={{ fontSize:10,color:'#475569',fontWeight:600,
+                textTransform:'uppercase',letterSpacing:'0.6px',marginBottom:4 }}>
+                Ingreso neto mensual
+              </div>
+              <span style={{ fontSize:28,fontWeight:800,color:'#34d399',
+                letterSpacing:'-0.5px',fontVariantNumeric:'tabular-nums' }}>
+                {fmtMoney(incomeValue)}
+              </span>
+            </div>
+            <button onClick={startEdit} style={{
+              padding:'8px 12px',borderRadius:10,
+              border:'1px solid rgba(255,255,255,0.08)',
+              background:'rgba(255,255,255,0.04)',
+              color:'#64748b',fontSize:13,cursor:'pointer',
+              transition:'all 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.color='#e2e8f0'; e.currentTarget.style.background='rgba(255,255,255,0.08)'; }}
+            onMouseLeave={e => { e.currentTarget.style.color='#64748b'; e.currentTarget.style.background='rgba(255,255,255,0.04)'; }}>
               ✏️
             </button>
           </div>
         )}
-      </Pnl>
+      </div>
 
-      {/* Monthly net income history */}
+      {/* ── Monthly income history ── */}
       <MonthlyIncomeHistory />
 
-      {/* Month comparison */}
-      <Pnl title={`Comparación vs ${MONTHS[mo === 0 ? 11 : mo - 1]}`}>
-        <style>{`.cmp-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}`}</style>
-        <div className="cmp-grid">
-          {[
-            { label: 'Ingresos',  key: 'income',    c:'#2dd4a8' },
-            { label: 'Gastos',    key: 'expenses',  c:'#f0a848' },
-            { label: 'Balance',   key: 'balance',   c:'#7c6cf0' },
-          ].map(({ label, key, c }) => {
-            const val = cmp?.current?.[key]  ?? 0;
-            const vrn = cmp?.variation?.[key] ?? 0;
-            return (
-              <div key={key} style={{ background:`linear-gradient(135deg,${c}10 0%,rgba(255,255,255,0.02) 100%)`,borderRadius:10,padding:'10px 12px',border:`1px solid ${c}28` }}>
-                <div style={{ fontSize:10,color:`${c}90`,fontWeight:600,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:4 }}>
-                  {label}
-                </div>
-                {cmpLoading ? (
-                  <div style={{ height:20,borderRadius:6,background:'rgba(255,255,255,0.06)',marginBottom:4 }} />
-                ) : (
-                  <div style={{ fontSize:15,fontWeight:800,color:'#e8e8f0',marginBottom:2 }}>
-                    {Mn.fmt(val)}
-                  </div>
-                )}
-                {cmpLoading ? (
-                  <div style={{ height:12,width:'50%',borderRadius:4,background:'rgba(255,255,255,0.04)' }} />
-                ) : (
-                  <div style={{ fontSize:11,fontWeight:600,color:varColor(vrn) }}>
-                    {varLabel(vrn)}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </Pnl>
+      {/* ── Month comparison ── */}
+      <SectionLabel>vs {prevMonth}</SectionLabel>
+      <div className="dash-cmp" style={{ marginBottom:4 }}>
+        {[
+          { label:'Ingresos', key:'income',   color:'#34d399' },
+          { label:'Gastos',   key:'expenses', color:'#f87171' },
+          { label:'Balance',  key:'balance',  color:'#818cf8' },
+        ].map(({ label, key, color }) => (
+          <CmpCell key={key} label={label}
+            value={cmp?.current?.[key] ?? 0}
+            variation={cmp?.variation?.[key] ?? 0}
+            color={color} loading={cmpLoading} />
+        ))}
+      </div>
 
-      {/* Alerts */}
-      {alerts.map((a,i) => (
-        <div key={i} style={{ padding:'8px 12px',borderRadius:10,fontSize:12,fontWeight:500,marginBottom:6,background:a.t==='danger'?'rgba(240,96,112,0.12)':a.t==='warning'?'rgba(240,168,72,0.12)':'rgba(124,108,240,0.1)',color:a.t==='danger'?'#f06070':a.t==='warning'?'#f0a848':'#a8a0f8',border:`1px solid ${a.t==='danger'?'rgba(240,96,112,0.2)':a.t==='warning'?'rgba(240,168,72,0.2)':'rgba(124,108,240,0.15)'}` }}>
-          {a.t==='danger'?'🚨':a.t==='warning'?'⚠️':'💡'} {a.m}
-        </div>
-      ))}
-
-
-      {/* Budget progress */}
+      {/* ── Budget progress ── */}
       {budgetEntries.length > 0 && (
-        <Pnl title={`Presupuestos ${MONTHS[mo]}`}>
-          {budgetEntries.map((b,i) => (
-            <div key={i} style={{ marginBottom:i<budgetEntries.length-1?12:0 }}>
-              <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4 }}>
-                <span style={{ fontSize:11,fontWeight:600,color:'#e8e8f0' }}>{RUBRO_EMOJI[b.rubro]||'📎'} {b.rubro}</span>
-                <span style={{ fontSize:10,color:b.pct>100?'#f06070':b.pct>80?'#f0a848':'#6c7280' }}>{Mn.fmt(b.spent)} / {Mn.fmt(b.limit)}</span>
-              </div>
-              <div style={{ height:6,borderRadius:3,background:'rgba(255,255,255,0.06)',overflow:'hidden' }}>
-                <div style={{ height:'100%',borderRadius:3,width:`${Math.min(b.pct,100)}%`,background:b.pct>100?'#f06070':b.pct>80?'#f0a848':'#2dd4a8',transition:'width .5s' }} />
-              </div>
-            </div>
-          ))}
-        </Pnl>
+        <>
+          <SectionLabel>Presupuestos · {MONTHS[mo]}</SectionLabel>
+          <div style={{ background:'#111219',borderRadius:12,padding:'16px',
+            border:'1px solid rgba(255,255,255,0.08)',marginBottom:4 }}>
+            {budgetEntries.map((b,i) => (
+              <BudgetRow key={i} b={b} isLast={i === budgetEntries.length-1} />
+            ))}
+          </div>
+        </>
       )}
 
-      {/* Savings goals */}
+      {/* ── Savings goals ── */}
       {goals.length > 0 && (
-        <Pnl title="Metas de ahorro">
-          {goals.map(g => {
-            const pct = g.target_amount > 0 ? Math.min((g.saved_amount / g.target_amount) * 100, 100) : 0;
-            return (
-              <div key={g.id} style={{ marginBottom: goals.indexOf(g) < goals.length-1 ? 16 : 0 }}>
-                <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6 }}>
-                  <span style={{ fontSize:15,fontWeight:700,color:'#e8e8f0' }}>🎯 {g.name}</span>
-                  <span style={{ fontSize:13,fontWeight:600,color: pct >= 100 ? '#4ade80' : '#6c7280',fontVariantNumeric:'tabular-nums' }}>{Mn.fmt(g.saved_amount)} / {Mn.fmt(g.target_amount)}</span>
-                </div>
-                <div style={{ height:7,borderRadius:4,background:'rgba(255,255,255,0.06)',overflow:'hidden' }}>
-                  <div style={{ height:'100%',borderRadius:4,width:`${pct}%`,background: pct >= 100 ? '#4ade80' : '#7c6cf0',transition:'width .5s' }} />
-                </div>
-                {g.deadline && <div style={{ fontSize:11,color:'#6c7280',marginTop:4 }}>Meta: {g.deadline}</div>}
-              </div>
-            );
-          })}
-        </Pnl>
+        <>
+          <SectionLabel>Metas de ahorro</SectionLabel>
+          <div style={{ background:'#111219',borderRadius:12,padding:'16px',
+            border:'1px solid rgba(255,255,255,0.08)',marginBottom:4 }}>
+            {goals.map((g,i) => (
+              <GoalRow key={g.id} g={g} isLast={i === goals.length-1} />
+            ))}
+          </div>
+        </>
       )}
 
-      {/* Charts - 2 columns on desktop */}
+      {/* ── Charts ── */}
+      <SectionLabel>Análisis</SectionLabel>
       <div className="dash-charts">
-        <Pnl title="Gasto mensual por tarjeta">
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={sectionBarData} margin={{ top:0,right:0,left:-10,bottom:0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-              <XAxis dataKey="name" tick={{ fill:'#8888a0',fontSize:10 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill:'#8888a0',fontSize:10 }} axisLine={false} tickLine={false} tickFormatter={Mn.short} />
-              <Tooltip contentStyle={ttS} labelStyle={tooltipLabel} itemStyle={tooltipItem} wrapperStyle={tooltipWrapper} cursor={tooltipCursor} formatter={(v,name) => [Mn.fmt(v),name]} />
-              {Object.values(SECTIONS).map(s => <Bar key={s.short} dataKey={s.short} stackId="a" fill={s.color} radius={[2,2,0,0]} />)}
+        {/* Bar: gasto por tarjeta */}
+        <div style={{ background:'#111219',borderRadius:12,padding:'16px',
+          border:'1px solid rgba(255,255,255,0.08)' }}>
+          <div style={{ fontSize:10,fontWeight:700,color:'#475569',
+            textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:12 }}>
+            Gasto mensual por tarjeta
+          </div>
+          <ResponsiveContainer width="100%" height={210}>
+            <BarChart data={sectionBarData} margin={{ top:0,right:0,left:-14,bottom:0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+              <XAxis dataKey="name" tick={{ fill:'#64748b',fontSize:10 }}
+                axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill:'#64748b',fontSize:10 }}
+                axisLine={false} tickLine={false} tickFormatter={Mn.short} />
+              <Tooltip contentStyle={ttS} labelStyle={tooltipLabel}
+                itemStyle={tooltipItem} wrapperStyle={tooltipWrapper}
+                cursor={tooltipCursor} formatter={(v,name) => [Mn.fmt(v),name]} />
+              {Object.values(SECTIONS).map(s => (
+                <Bar key={s.short} dataKey={s.short} stackId="a"
+                  fill={s.color} radius={[3,3,0,0]} />
+              ))}
             </BarChart>
           </ResponsiveContainer>
-        </Pnl>
+        </div>
 
-        <Pnl title="Distribución por rubro">
-          <ResponsiveContainer width="100%" height={220}>
+        {/* Pie: distribución por rubro */}
+        <div style={{ background:'#111219',borderRadius:12,padding:'16px',
+          border:'1px solid rgba(255,255,255,0.08)' }}>
+          <div style={{ fontSize:10,fontWeight:700,color:'#475569',
+            textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:12 }}>
+            Distribución por rubro
+          </div>
+          <ResponsiveContainer width="100%" height={180}>
             <PieChart>
-              <Pie data={rubroData} dataKey="total" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={2} stroke="none">
+              <Pie data={rubroData} dataKey="total" nameKey="name"
+                cx="50%" cy="50%" innerRadius={48} outerRadius={76}
+                paddingAngle={2} stroke="none">
                 {rubroData.map((_,i) => <Cell key={i} fill={COLORS[i%COLORS.length]} />)}
               </Pie>
-              <Tooltip contentStyle={ttS} labelStyle={tooltipLabel} itemStyle={tooltipItem} wrapperStyle={tooltipWrapper} formatter={(v,name) => [Mn.fmt(v)+` (${Mn.pct(v,rubroTotal)})`,name]} />
+              <Tooltip contentStyle={ttS} labelStyle={tooltipLabel}
+                itemStyle={tooltipItem} wrapperStyle={tooltipWrapper}
+                formatter={(v,name) => [Mn.fmt(v)+` (${Mn.pct(v,rubroTotal)})`,name]} />
             </PieChart>
           </ResponsiveContainer>
-          <div style={{ display:'flex',flexWrap:'wrap',gap:'4px 12px',justifyContent:'center',marginTop:6 }}>
+          <div style={{ display:'flex',flexWrap:'wrap',gap:'4px 12px',
+            justifyContent:'center',marginTop:8 }}>
             {rubroData.slice(0,10).map((r,i) => (
-              <div key={i} style={{ display:'flex',alignItems:'center',gap:4,fontSize:10,color:'#a0a0b8' }}>
-                <div style={{ width:8,height:8,borderRadius:2,background:COLORS[i%COLORS.length] }} />{r.name}
+              <div key={i} style={{ display:'flex',alignItems:'center',
+                gap:5,fontSize:10,color:'#94a3b8' }}>
+                <div style={{ width:7,height:7,borderRadius:2,
+                  background:COLORS[i%COLORS.length],flexShrink:0 }} />
+                {r.name}
               </div>
             ))}
           </div>
-        </Pnl>
+        </div>
 
-        <div style={{ gridColumn:'1 / -1' }}>
-          <Pnl title="Ingreso vs gasto">
-            <ResponsiveContainer width="100%" height={200}>
-              <LineChart data={incomeVsExpenseData} margin={{ top:0,right:0,left:-10,bottom:0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                <XAxis dataKey="name" tick={{ fill:'#8888a0',fontSize:10 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill:'#8888a0',fontSize:10 }} axisLine={false} tickLine={false} tickFormatter={Mn.short} />
-                <Tooltip contentStyle={ttS} labelStyle={tooltipLabel} itemStyle={tooltipItem} wrapperStyle={tooltipWrapper} cursor={tooltipCursor} formatter={(v,name) => [Mn.fmt(v),name]} />
-                <Line type="monotone" dataKey="Ingreso" stroke="#2dd4a8" strokeWidth={2} dot={{ r:3,fill:'#2dd4a8' }} />
-                <Line type="monotone" dataKey="Gasto" stroke="#f06070" strokeWidth={2} dot={{ r:3,fill:'#f06070' }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </Pnl>
+        {/* Line: Ingreso vs Gasto (full width) */}
+        <div style={{ background:'#111219',borderRadius:12,padding:'16px',
+          border:'1px solid rgba(255,255,255,0.08)',gridColumn:'1 / -1' }}>
+          <div style={{ fontSize:10,fontWeight:700,color:'#475569',
+            textTransform:'uppercase',letterSpacing:'0.8px',marginBottom:12 }}>
+            Ingreso vs Gasto · 12 meses
+          </div>
+          <ResponsiveContainer width="100%" height={190}>
+            <LineChart data={incomeVsExpenseData} margin={{ top:0,right:4,left:-14,bottom:0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+              <XAxis dataKey="name" tick={{ fill:'#64748b',fontSize:10 }}
+                axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill:'#64748b',fontSize:10 }}
+                axisLine={false} tickLine={false} tickFormatter={Mn.short} />
+              <Tooltip contentStyle={ttS} labelStyle={tooltipLabel}
+                itemStyle={tooltipItem} wrapperStyle={tooltipWrapper}
+                cursor={tooltipCursor} formatter={(v,name) => [Mn.fmt(v),name]} />
+              <Line type="monotone" dataKey="Ingreso" stroke="#34d399" strokeWidth={2.5}
+                dot={{ r:3, fill:'#34d399', strokeWidth:0 }}
+                activeDot={{ r:5, fill:'#34d399' }} />
+              <Line type="monotone" dataKey="Gasto" stroke="#f87171" strokeWidth={2.5}
+                dot={{ r:3, fill:'#f87171', strokeWidth:0 }}
+                activeDot={{ r:5, fill:'#f87171' }} />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       </div>
-      <div style={{ height:24 }} />
+
+      <div style={{ height:28 }} />
     </div>
   );
 }
