@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/services/supabase';
 import { profileService } from '@/services/profile.service';
+import { useStore } from '@/stores/useStore';
 
 export function useAuth() {
   const [session, setSession] = useState(null);
@@ -10,6 +11,14 @@ export function useAuth() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
+      // Start loading app data immediately — before React re-renders App.
+      // The store's deduplication key prevents a double load when App.jsx's
+      // useEffect also fires after the React render cycle completes.
+      if (session?.user?.id) {
+        const store = useStore.getState();
+        store.setUserId(session.user.id);
+        store.loadAll();
+      }
       setSession(session);
       setAuthLoading(false);
       if (session) profileService.touch().catch(() => {});

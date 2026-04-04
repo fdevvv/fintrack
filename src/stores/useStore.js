@@ -9,6 +9,21 @@ import { monthlyBalanceService } from '@/services/monthlyBalance.service';
 import { sectionsService } from '@/services/sections.service';
 import { useUiStore } from '@/stores/uiStore';
 
+// ── Cache helpers (stale-while-revalidate) ──────────────────────────────────
+const CACHE_V = 'v1';
+const _cacheKey = (uid, yr) => `ft_cache_${CACHE_V}_${uid}_${yr}`;
+const readCache = (uid, yr) => {
+  try { return JSON.parse(localStorage.getItem(_cacheKey(uid, yr)) || 'null'); } catch { return null; }
+};
+const writeCache = (uid, yr, data) => {
+  try { localStorage.setItem(_cacheKey(uid, yr), JSON.stringify(data)); } catch {}
+};
+
+// ── Deduplication: prevents concurrent loads for the same user+year ──────────
+// Module-level so it survives across React re-renders without polluting state.
+let _currentLoadKey = null;
+// ───────────────────────────────────────────────────────────────────────────
+
 export const useStore = create((set, get) => ({
   // State
   year: new Date().getFullYear(),
@@ -22,53 +37,110 @@ export const useStore = create((set, get) => ({
   budgets: {},
   monthlyBalance: [],
   userSections: [],
+  userId: null,
 
   // Navigation
   setPage: (page) => set({ page }),
   setYear: (year) => { set({ year, month: -1 }); get().loadAll(); },
   setMonth: (month) => set({ month }),
+  setUserId: (userId) => set({ userId }),
 
-  // Load everything for current year
+  // Load everything for current year — two-phase strategy:
+  //   Phase 1: current-month transactions + all small tables → render immediately
+  //   Phase 2: full-year transactions arrive silently → charts update
   loadAll: async () => {
-    useUiStore.getState().setSyncing(true);
-    const { year } = get();
-    try {
-      // First check if user has any years — if not, auto-setup
-      let yrs = await yearsService.list();
-      if (!yrs.length) {
-        // New user — create current year and seed categories
-        const currentYear = new Date().getFullYear();
-        await yearsService.create(currentYear);
-        // Seed categories via RPC (may already exist from trigger, that's ok)
-        const { data: { session } } = await (await import('@/services/supabase')).supabase.auth.getSession();
-        if (session?.user) {
-          try { await (await import('@/services/supabase')).supabase.rpc('seed_default_categories', { p_user_id: session.user.id }); } catch {}
-        }
-        yrs = [currentYear];
-        set({ year: currentYear });
-      }
+    const { year, userId } = get();
+    const loadKey = `${userId}_${year}`;
 
-      const activeYear = get().year;
+    // Deduplicate: skip if this exact user+year is already loading
+    if (_currentLoadKey === loadKey) return;
+    _currentLoadKey = loadKey;
+
+    // ── Stale-while-revalidate: show last session's data instantly ────────
+    if (userId) {
+      const cached = readCache(userId, year);
+      if (cached) {
+        set({
+          transactions:   cached.transactions   ?? [],
+          categories:     cached.categories     ?? [],
+          income:         cached.income         ?? new Array(12).fill(0),
+          profile:        cached.profile        ?? null,
+          budgets:        cached.budgets        ?? {},
+          monthlyBalance: cached.monthlyBalance ?? [],
+          userSections:   cached.userSections   ?? [],
+          years:          cached.years          ?? [year],
+        });
+      }
+    }
+
+    useUiStore.getState().setSyncing(true);
+    try {
       const storeMonth = get().month;
       const activeMonth = storeMonth >= 0 ? storeMonth + 1 : new Date().getMonth() + 1;
-      const [txs, cats, inc, prof, budgetRows, balanceRows, sectionRows] = await Promise.all([
-        transactionsService.list(activeYear),
+
+      // Kick off full-year fetch immediately so it runs in parallel with everything else.
+      // We won't await it here — it arrives silently after phase 1.
+      const yearTxsPromise = transactionsService.list(year);
+
+      // ── Phase 1: fast queries + current-month transactions ───────────────
+      const [yrs, currentTxs, cats, inc, prof, budgetRows, balanceRows, sectionRows] = await Promise.all([
+        yearsService.list(),
+        transactionsService.listMonth(year, activeMonth),
         categoriesService.list(),
-        incomeService.list(activeYear),
+        incomeService.list(year),
         profileService.get(),
-        budgetsService.list(activeYear, activeMonth),
-        monthlyBalanceService.list(activeYear).catch(e => { console.error('[monthly_balance]', e); return []; }),
+        budgetsService.list(year, activeMonth),
+        monthlyBalanceService.list(year).catch(e => { console.error('[monthly_balance]', e); return []; }),
         sectionsService.list().catch(e => { console.error('[user_sections]', e); return []; }),
       ]);
+
+      let finalYears = yrs;
+      let finalCats  = cats;
+
+      if (!yrs.length) {
+        // New user — create year and seed default categories
+        const currentYear = new Date().getFullYear();
+        await yearsService.create(currentYear);
+        const { supabase } = await import('@/services/supabase');
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          try { await supabase.rpc('seed_default_categories', { p_user_id: session.user.id }); } catch {}
+        }
+        finalYears = [currentYear];
+        set({ year: currentYear });
+        finalCats = await categoriesService.list();
+      }
+
       const budgets = {};
       budgetRows.forEach(b => {
         const name = b.categories?.name;
         if (name) budgets[name] = b.limit_cents;
       });
-      set({ transactions: txs, categories: cats, income: inc, profile: prof, years: yrs, budgets, monthlyBalance: balanceRows, userSections: sectionRows });
+
+      const baseData = {
+        categories: finalCats, income: inc, profile: prof,
+        years: finalYears, budgets, monthlyBalance: balanceRows, userSections: sectionRows,
+      };
+
+      // Phase 1 complete — render immediately with current-month transactions
+      set({ ...baseData, transactions: currentTxs });
       useUiStore.getState().setSyncing(false);
+
+      // ── Phase 2: full-year transactions — silent background update ────────
+      yearTxsPromise.then(yearTxs => {
+        // Discard if user navigated to a different year mid-flight
+        if (_currentLoadKey !== loadKey) return;
+        _currentLoadKey = null;
+        set({ transactions: yearTxs });
+        if (userId) writeCache(userId, year, { ...baseData, transactions: yearTxs });
+      }).catch(err => {
+        console.error('[loadAll phase2]', err);
+        if (_currentLoadKey === loadKey) _currentLoadKey = null;
+      });
+
     } catch (err) {
-      console.error('loadAll error:', err);
+      console.error('[loadAll]', err);
+      if (_currentLoadKey === loadKey) _currentLoadKey = null;
       useUiStore.getState().setSyncing(false);
     }
   },

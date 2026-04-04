@@ -36,7 +36,7 @@ const ROUTE_PAGES = Object.fromEntries(Object.entries(PAGE_ROUTES).map(([k, v]) 
 
 export default function App() {
   const { session, authLoading, signOut } = useAuth();
-  const { page, setPage, year, years, setYear, loadAll, profile } = useStore();
+  const { page, setPage, year, years, setYear, loadAll, profile, setUserId } = useStore();
   const { syncing, toast, clearToast, notifHasNew, openNotif } = useUiStore();
   const [showBanner, setShowBanner] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
@@ -58,7 +58,10 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (session?.user?.id) loadAll();
+    if (session?.user?.id) {
+      setUserId(session.user.id);
+      loadAll();
+    }
   }, [session?.user?.id, year]);
 
   // Mostrar guía de onboarding si el usuario no la completó todavía

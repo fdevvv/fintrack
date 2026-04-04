@@ -12,6 +12,26 @@ export const transactionsService = {
     return data || [];
   },
 
+  // Fetch only one month — used for the fast phase-1 render on startup.
+  // month is 1-based (1 = January).
+  async listMonth(year, month) {
+    const mm = String(month).padStart(2, '0');
+    const start = `${year}-${mm}-01`;
+    const nextMm = month === 12
+      ? `${year + 1}-01-01`
+      : `${year}-${String(month + 1).padStart(2, '0')}-01`;
+    const { data, error } = await supabase
+      .from('transactions')
+      .select('*, categories(name, icon, color)')
+      .eq('year', year)
+      .gte('transaction_date', start)
+      .lt('transaction_date', nextMm)
+      .is('deleted_at', null)
+      .order('transaction_date', { ascending: true });
+    if (error) throw error;
+    return data || [];
+  },
+
   async create(tx) {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) throw new Error('No authenticated user');
