@@ -6,7 +6,7 @@ import { useStore } from '@/stores/useStore';
 export function useAuth() {
   const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
-  // Distingue un cierre de sesión explícito del usuario vs. expiración de token
+  // Distingue un cierre de sesión explícito del usuario vs. cualquier evento remoto
   const deliberateSignOut = useRef(false);
 
   useEffect(() => {
@@ -26,7 +26,9 @@ export function useAuth() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT') {
-        // Solo deslogear si fue acción explícita del usuario
+        // Solo cerrar sesión si fue una acción explícita en este dispositivo.
+        // Eventos remotos (otro dispositivo, expiración) se ignoran para mantener
+        // la sesión abierta hasta que el usuario decida cerrarla.
         if (deliberateSignOut.current) {
           deliberateSignOut.current = false;
           setSession(null);
@@ -74,7 +76,8 @@ export function useAuth() {
 
   const signOut = async () => {
     deliberateSignOut.current = true;
-    await supabase.auth.signOut();
+    // scope: 'local' — solo invalida la sesión en este dispositivo
+    await supabase.auth.signOut({ scope: 'local' });
     setSession(null);
   };
 

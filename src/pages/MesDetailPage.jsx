@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMonthDetail } from '@/hooks/analytics/useMonthDetail';
+import { useStore } from '@/stores/useStore';
 import { Pnl, ST } from '@/components/ui/Shared';
 import { Mn } from '@/utils/money';
 import { MONTHS_FULL, COLORS } from '@/utils/constants';
-import { cardStyle, tooltipStyle, tooltipLabel, tooltipItem, tooltipWrapper, tooltipCursor } from '@/utils/styles';
+import { tooltipStyle, tooltipLabel, tooltipItem, tooltipWrapper, tooltipCursor } from '@/utils/styles';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 
 function fmtMonthTitle(monthKey) {
@@ -15,6 +16,7 @@ function fmtMonthTitle(monthKey) {
 
 export function MesDetailPage({ month }) {
   const navigate  = useNavigate();
+  const loadingYear = useStore(s => s.loadingYear);
   const { ingresoNeto, totalExpenses, disponible, rubroData, sectionData, expenses } = useMonthDetail(month);
 
   const [search, setSearch] = useState('');
@@ -138,7 +140,12 @@ export function MesDetailPage({ month }) {
         onChange={e => setSearch(e.target.value)}
         style={{ width: '100%', boxSizing: 'border-box', padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)', color: '#e8e8f0', fontSize: 13, outline: 'none', marginBottom: 10 }}
       />
-      {sorted.length > 0 ? (
+      {loadingYear && expenses.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+          <div className="ft-spinner" style={{ margin: '0 auto 12px' }} />
+          <div style={{ fontSize: 12, color: '#5c5c72' }}>Cargando datos del año...</div>
+        </div>
+      ) : sorted.length > 0 ? (
         <div>
           <div style={{ fontSize: 11, color: '#5c5c72', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
             {sorted.length} movimientos

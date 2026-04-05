@@ -38,6 +38,7 @@ export const useStore = create((set, get) => ({
   monthlyBalance: [],
   userSections: [],
   userId: null,
+  loadingYear: false,
 
   // Navigation
   setPage: (page) => set({ page }),
@@ -55,6 +56,7 @@ export const useStore = create((set, get) => ({
     // Deduplicate: skip if this exact user+year is already loading
     if (_currentLoadKey === loadKey) return;
     _currentLoadKey = loadKey;
+    set({ loadingYear: true });
 
     // ── Stale-while-revalidate: show last session's data instantly ────────
     if (userId) {
@@ -131,16 +133,16 @@ export const useStore = create((set, get) => ({
         // Discard if user navigated to a different year mid-flight
         if (_currentLoadKey !== loadKey) return;
         _currentLoadKey = null;
-        set({ transactions: yearTxs });
+        set({ transactions: yearTxs, loadingYear: false });
         if (userId) writeCache(userId, year, { ...baseData, transactions: yearTxs });
       }).catch(err => {
         console.error('[loadAll phase2]', err);
-        if (_currentLoadKey === loadKey) _currentLoadKey = null;
+        if (_currentLoadKey === loadKey) { _currentLoadKey = null; set({ loadingYear: false }); }
       });
 
     } catch (err) {
       console.error('[loadAll]', err);
-      if (_currentLoadKey === loadKey) _currentLoadKey = null;
+      if (_currentLoadKey === loadKey) { _currentLoadKey = null; set({ loadingYear: false }); }
       useUiStore.getState().setSyncing(false);
     }
   },

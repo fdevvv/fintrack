@@ -22,7 +22,7 @@ export function useDashboard() {
   // Totales por mes para gráficos (todos los gastos, manual + importado)
   const monthlyTotals = useMemo(() => {
     const t = new Array(12).fill(0);
-    expenses.forEach(tx => { t[new Date(tx.transaction_date).getMonth()] += tx.amount_cents; });
+    expenses.forEach(tx => { t[parseInt(tx.transaction_date.slice(5, 7)) - 1] += tx.amount_cents; });
     return t;
   }, [expenses]);
 
@@ -31,7 +31,7 @@ export function useDashboard() {
     const subs = {};
     Object.keys(SECTIONS).forEach(k => { subs[k] = new Array(12).fill(0); });
     expenses.forEach(t => {
-      const m = new Date(t.transaction_date).getMonth();
+      const m = parseInt(t.transaction_date.slice(5, 7)) - 1;
       const sec = t.section || 'OTROS';
       if (subs[sec]) subs[sec][m] += t.amount_cents;
     });
@@ -135,14 +135,17 @@ export function useDashboard() {
   }, [currentMonthExpenses, budgets]);
 
   // ── Gráfico Ingreso vs Gasto ───────────────────────────────────────────────
-  const incomeVsExpenseData = MONTHS.map((m, i) => ({
-    name: m,
-    Ingreso: income[i] || 0,
-    Gasto: monthlyTotals[i] || 0,
-  }));
+  const incomeVsExpenseData = useMemo(() =>
+    MONTHS.map((m, i) => ({
+      name: m,
+      Ingreso: income[i] || 0,
+      Gasto: monthlyTotals[i] || 0,
+    })),
+    [income, monthlyTotals]
+  );
 
   // ── Cards del dashboard ────────────────────────────────────────────────────
-  const cards = [
+  const cards = useMemo(() => [
     {
       l: `Disponible ${MONTHS[mo]}`,
       v: ingresoNeto > 0 ? Mn.short(ingresoNeto) : '—',
@@ -157,7 +160,7 @@ export function useDashboard() {
       c: restante >= 0 ? '#2dd4a8' : '#f06070',
       s: gastosDiarios > 0 ? `− ${Mn.short(gastosDiarios)} gastado` : 'Sin gastos este mes',
     },
-  ];
+  ], [mo, ingresoNeto, restante, gastosDiarios]);
 
   const rubroTotal = rubroData.reduce((s, r) => s + r.total, 0);
 

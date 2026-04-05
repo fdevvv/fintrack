@@ -4,8 +4,8 @@ import { Mn } from '@/utils/money';
 import { tooltipStyle, tooltipLabel, tooltipItem, tooltipWrapper, tooltipCursor } from '@/utils/styles';
 import { useDashboard } from '@/hooks/analytics/useDashboard';
 import { useMonthComparison } from '@/hooks/analytics/useMonthComparison';
-import { useMonthlyIncome } from '@/hooks/income/useMonthlyIncome';
 import { useSavingsGoals } from '@/hooks/savings/useSavingsGoals';
+import { useStore } from '@/stores/useStore';
 import { MonthlyIncomeHistory } from '@/components/income/MonthlyIncomeHistory';
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
@@ -133,6 +133,12 @@ function AlertBanner({ type, message }) {
   );
 }
 
+/* ─── Income formatter ──────────────────────────────────────────────────── */
+function fmtMoney(n) {
+  const safe = isFinite(n) && !isNaN(n) ? Math.max(0, n) : 0;
+  return '$' + safe.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 /* ─── Section label ─────────────────────────────────────────────────────── */
 function SectionLabel({ children, action }) {
   return (
@@ -221,30 +227,30 @@ export function DashPage() {
   const {
     mo, sectionBarData, rubroData, rubroTotal,
     alerts, budgetEntries, incomeVsExpenseData, cards,
-    todaySpent, weekSpent,
+    todaySpent, weekSpent, ingresoNeto,
   } = useDashboard();
   const { goals } = useSavingsGoals();
   const { data: cmp, loading: cmpLoading } = useMonthComparison();
+  const { setIncome } = useStore();
   const ttS = tooltipStyle;
 
-  // Monthly income editor
-  const now      = new Date();
-  const monthKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  const { income: incomeValue, loading: incLoading, updateIncome } = useMonthlyIncome(monthKey);
+  // Monthly income editor — usa dato ya cargado en el store (income[mo])
   const [isEditing, setIsEditing] = useState(false);
   const [inputVal,  setInputVal]  = useState('');
+  const [saving,    setSaving]    = useState(false);
 
-  const fmtMoney = n => {
-    const safe = isFinite(n) && !isNaN(n) ? Math.max(0,n) : 0;
-    return '$' + safe.toLocaleString('es-AR', { minimumFractionDigits:2, maximumFractionDigits:2 });
-  };
-  const startEdit  = () => { setInputVal(String(incomeValue || '')); setIsEditing(true); };
+  const startEdit  = () => { setInputVal(String(ingresoNeto || '')); setIsEditing(true); };
   const cancelEdit = () => setIsEditing(false);
   const handleSave = async () => {
     const n = Number(inputVal);
     if (!isFinite(n) || isNaN(n) || n < 0) return;
-    await updateIncome(n);
-    setIsEditing(false);
+    setSaving(true);
+    try {
+      await setIncome(mo + 1, n);
+    } finally {
+      setSaving(false);
+      setIsEditing(false);
+    }
   };
   const handleKey = e => {
     if (e.key === 'Enter')  handleSave();
@@ -290,14 +296,7 @@ export function DashPage() {
       <SectionLabel>Ingreso {MONTHS[mo]}</SectionLabel>
       <div style={{ background:'#111219',borderRadius:12,padding:'16px',
         border:'1px solid rgba(255,255,255,0.08)',marginBottom:4 }}>
-        {incLoading && !isEditing ? (
-          <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between' }}>
-            <div style={{ height:32,width:160,borderRadius:8,
-              background:'rgba(255,255,255,0.05)',animation:'pulse 1.5s infinite' }} />
-            <div style={{ height:32,width:36,borderRadius:8,
-              background:'rgba(255,255,255,0.03)',animation:'pulse 1.5s infinite' }} />
-          </div>
-        ) : isEditing ? (
+        {isEditing ? (
           <div style={{ display:'flex',alignItems:'center',gap:8 }}>
             <input
               type="number" value={inputVal}
@@ -311,12 +310,12 @@ export function DashPage() {
                 fontVariantNumeric:'tabular-nums',
                 fontFamily:"'Inter',system-ui,sans-serif" }}
             />
-            <button onClick={handleSave} disabled={incLoading} style={{
+            <button onClick={handleSave} disabled={saving} style={{
               padding:'9px 16px',borderRadius:10,border:'none',
               background:'linear-gradient(135deg,#059669,#34d399)',
               color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer',
-              opacity:incLoading?0.5:1,
-            }}>{incLoading ? '…' : '✓'}</button>
+              opacity:saving?0.5:1,
+            }}>{saving ? '…' : '✓'}</button>
             <button onClick={cancelEdit} style={{
               padding:'9px 12px',borderRadius:10,
               border:'1px solid rgba(255,255,255,0.08)',background:'transparent',
@@ -332,7 +331,7 @@ export function DashPage() {
               </div>
               <span style={{ fontSize:28,fontWeight:800,color:'#34d399',
                 letterSpacing:'-0.5px',fontVariantNumeric:'tabular-nums' }}>
-                {fmtMoney(incomeValue)}
+                {fmtMoney(ingresoNeto)}
               </span>
             </div>
             <button onClick={startEdit} style={{
