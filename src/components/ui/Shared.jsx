@@ -188,7 +188,7 @@ export function Toast({ toast, onClear }) {
 /* ─── Confirm Modal ────────────────────────────────────────────────────── */
 export function ConfirmModal({ show, title, message, onConfirm, onCancel }) {
   if (!show) return null;
-  return (
+  return createPortal(
     <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.75)',
       backdropFilter:'blur(6px)',display:'flex',alignItems:'center',
       justifyContent:'center',zIndex:10000,padding:20 }} onClick={onCancel}>
@@ -212,14 +212,15 @@ export function ConfirmModal({ show, title, message, onConfirm, onCancel }) {
           }}>Eliminar</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
 /* ─── Installment Delete Modal ─────────────────────────────────────────── */
 export function InstallmentDeleteModal({ show, item, onDeleteOne, onDeleteAll, onCancel }) {
   if (!show) return null;
-  return (
+  return createPortal(
     <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.75)',
       backdropFilter:'blur(6px)',display:'flex',alignItems:'center',
       justifyContent:'center',zIndex:10000,padding:20 }} onClick={onCancel}>
@@ -263,7 +264,8 @@ export function InstallmentDeleteModal({ show, item, onDeleteOne, onDeleteAll, o
           }}>Cancelar</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

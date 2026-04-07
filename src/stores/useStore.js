@@ -39,12 +39,17 @@ export const useStore = create((set, get) => ({
   userSections: [],
   userId: null,
   loadingYear: false,
+  dataReady: false,
 
   // Navigation
   setPage: (page) => set({ page }),
   setYear: (year) => { set({ year, month: -1 }); get().loadAll(); },
   setMonth: (month) => set({ month }),
-  setUserId: (userId) => set({ userId }),
+  setUserId: (userId) => set((s) => ({
+    userId,
+    // Resetear dataReady si cambia de usuario para no mostrar datos del usuario anterior
+    dataReady: s.userId === userId ? s.dataReady : false,
+  })),
 
   // Load everything for current year — two-phase strategy:
   //   Phase 1: current-month transactions + all small tables → render immediately
@@ -71,6 +76,7 @@ export const useStore = create((set, get) => ({
           monthlyBalance: cached.monthlyBalance ?? [],
           userSections:   cached.userSections   ?? [],
           years:          cached.years          ?? [year],
+          dataReady: true, // hay datos del cache — renderizar ya
         });
       }
     }
@@ -124,8 +130,8 @@ export const useStore = create((set, get) => ({
         years: finalYears, budgets, monthlyBalance: balanceRows, userSections: sectionRows,
       };
 
-      // Phase 1 complete — render immediately with current-month transactions
-      set({ ...baseData, transactions: currentTxs });
+      // Phase 1 complete — datos listos para renderizar
+      set({ ...baseData, transactions: currentTxs, dataReady: true });
       useUiStore.getState().setSyncing(false);
 
       // ── Phase 2: full-year transactions — silent background update ────────

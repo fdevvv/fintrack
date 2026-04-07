@@ -8,12 +8,33 @@ export function useAuth() {
   const [authLoading, setAuthLoading] = useState(true);
   // Distingue un cierre de sesión explícito del usuario vs. cualquier evento remoto
   const deliberateSignOut = useRef(false);
+  // Evita refreshes concurrentes (visibilitychange + online pueden dispararse a la vez)
+  const refreshing = useRef(false);
 
   useEffect(() => {
+    // Intenta renovar el token de acceso. Si falla (refresh token expirado),
+    // lee la sesión desde storage como último recurso.
+    const tryRefresh = async () => {
+      if (refreshing.current) return;
+      refreshing.current = true;
+      try {
+        const { data } = await supabase.auth.refreshSession();
+        if (data?.session) {
+          setSession(data.session);
+          refreshing.current = false;
+          return;
+        }
+        // refreshSession devolvió null — leer desde storage por si acaso
+        const { data: stored } = await supabase.auth.getSession();
+        if (stored?.session) setSession(stored.session);
+      } catch {}
+      refreshing.current = false;
+    };
+
     supabase.auth.getSession().then(({ data: { session } }) => {
-      // Start loading app data immediately — before React re-renders App.
-      // The store's deduplication key prevents a double load when App.jsx's
-      // useEffect also fires after the React render cycle completes.
+      // Iniciar carga de datos inmediatamente, antes del ciclo de render de React.
+      // La clave de deduplicación del store previene una carga doble cuando el
+      // useEffect de App.jsx también dispara tras el render.
       if (session?.user?.id) {
         const store = useStore.getState();
         store.setUserId(session.user.id);
@@ -27,11 +48,13 @@ export function useAuth() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT') {
         // Solo cerrar sesión si fue una acción explícita en este dispositivo.
-        // Eventos remotos (otro dispositivo, expiración) se ignoran para mantener
-        // la sesión abierta hasta que el usuario decida cerrarla.
+        // Eventos remotos o de expiración disparan un intento de recuperación.
         if (deliberateSignOut.current) {
           deliberateSignOut.current = false;
           setSession(null);
+        } else {
+          // El refresh token puede haber expirado — intentar recuperar la sesión.
+          tryRefresh();
         }
         return;
       }
@@ -41,28 +64,28 @@ export function useAuth() {
       }
     });
 
-    // Refresca el token cuando el usuario vuelve al tab tras inactividad
+    // Refresca el token cuando el usuario vuelve al tab tras inactividad.
+    // Cubre el caso donde autoRefreshToken no disparó (app en background, iOS PWA).
     const handleVisibility = async () => {
       if (document.visibilityState !== 'visible') return;
       try {
         const { data: { session: stored } } = await supabase.auth.getSession();
         if (!stored) return;
         const now = Math.floor(Date.now() / 1000);
-        // Refrescar si el token ya expiró o vence en menos de 5 minutos
-        if (!stored.expires_at || stored.expires_at - now < 300) {
-          const { data } = await supabase.auth.refreshSession();
-          if (data?.session) setSession(data.session);
+        // Refrescar si el token ya expiró o vence en menos de 10 minutos
+        if (!stored.expires_at || stored.expires_at - now < 600) {
+          await tryRefresh();
         }
       } catch {}
     };
 
-    // Refresca el token cuando el dispositivo recupera conectividad
-    const handleOnline = async () => {
-      try {
-        const { data } = await supabase.auth.refreshSession();
-        if (data?.session) setSession(data.session);
-      } catch {}
-    };
+    // Refresca el token cuando el dispositivo recupera conectividad.
+    const handleOnline = () => tryRefresh();
+
+    // Refresh proactivo cada 45 minutos — cinturón sobre tirantes de autoRefreshToken.
+    // Los timers de JS se pausan/matan en mobile y PWA en background; este intervalo
+    // se reactiva al volver al primer plano y asegura tokens frescos en sesiones largas.
+    const refreshInterval = setInterval(tryRefresh, 45 * 60 * 1000);
 
     document.addEventListener('visibilitychange', handleVisibility);
     window.addEventListener('online', handleOnline);
@@ -71,6 +94,7 @@ export function useAuth() {
       subscription.unsubscribe();
       document.removeEventListener('visibilitychange', handleVisibility);
       window.removeEventListener('online', handleOnline);
+      clearInterval(refreshInterval);
     };
   }, []);
 

@@ -6,6 +6,18 @@
  */
 export const UPDATES = [
   {
+    id: 'update-20260406-1',
+    date: '6 de abril de 2026 · 21:44 (ARG)',
+    title: 'Sesión permanente, carga más rápida y gestión de tarjetas',
+    items: [
+      'La sesión ahora se mantiene activa en cualquier dispositivo: ya no se cierra sola al volver de varios días de inactividad, al perder y recuperar conexión, o al reabrir la app. Solo se cierra si cerrás sesión vos.',
+      'La app ya no muestra una pantalla negra al cargar: si tenés datos guardados del uso anterior aparecen al instante mientras se actualizan en segundo plano.',
+      'Configuración — Tarjetas: las tarjetas que creás en la pantalla Importar ahora aparecen en Configuración, donde podés editarles el nombre o eliminarlas.',
+      'Configuración — Nueva tarjeta: podés crear tarjetas directamente desde Configuración sin tener que ir a Importar.',
+      'Se corrigió el cuadro de confirmación al eliminar una tarjeta que aparecía mal posicionado en celular.',
+    ],
+  },
+  {
     id: 'update-20260403-2',
     date: '3 de abril de 2026 · 22:42 (ARG)',
     title: 'Nueva interfaz: diseño renovado en toda la app',

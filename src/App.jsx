@@ -36,7 +36,7 @@ const ROUTE_PAGES = Object.fromEntries(Object.entries(PAGE_ROUTES).map(([k, v]) 
 
 export default function App() {
   const { session, authLoading, signOut } = useAuth();
-  const { page, setPage, year, years, setYear, loadAll, profile, setUserId } = useStore();
+  const { page, setPage, year, years, setYear, loadAll, profile, setUserId, dataReady } = useStore();
   const { syncing, toast, clearToast, notifHasNew, openNotif } = useUiStore();
   const [showBanner, setShowBanner] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
@@ -130,6 +130,60 @@ export default function App() {
   }
 
   if (!session) return <AuthPage />;
+
+  // Sesión activa pero aún sin datos: mostrar splash para evitar pantalla negra.
+  // Ocurre en el primer uso del dispositivo (sin cache) o tras limpiar el storage.
+  if (!dataReady) {
+    return (
+      <div style={{ minHeight:'100vh', background:'#09090f', display:'flex',
+        alignItems:'center', justifyContent:'center' }}>
+        <style>{`
+          @keyframes ftBarSlide2 {
+            0%   { width: 0%;   opacity: 0.6; }
+            60%  { width: 80%;  opacity: 1; }
+            100% { width: 100%; opacity: 0.5; }
+          }
+          @keyframes ftLogoPulse2 {
+            0%, 100% { opacity: 0.9;  transform: scale(1); }
+            50%       { opacity: 1;   transform: scale(1.03); }
+          }
+          .ft-splash-logo2 { animation: ftLogoPulse2 2.2s ease-in-out infinite; }
+          .ft-splash-bar2  { animation: ftBarSlide2 1.6s cubic-bezier(.4,0,.2,1) infinite; }
+        `}</style>
+        <div style={{ textAlign:'center', display:'flex', flexDirection:'column',
+          alignItems:'center', gap:20 }}>
+          <div className="ft-splash-logo2" style={{
+            width:60, height:60, borderRadius:18,
+            background:'linear-gradient(135deg, #6366f1 0%, #818cf8 100%)',
+            display:'flex', alignItems:'center', justifyContent:'center',
+            boxShadow:'0 0 40px rgba(99,102,241,0.4), 0 0 80px rgba(99,102,241,0.15)',
+          }}>
+            <svg width="32" height="32" viewBox="0 0 30 30" fill="none">
+              <rect x="3"  y="18" width="6" height="9"  rx="2" fill="white" opacity="0.85"/>
+              <rect x="12" y="11" width="6" height="16" rx="2" fill="white"/>
+              <rect x="21" y="4"  width="6" height="23" rx="2" fill="white" opacity="0.85"/>
+            </svg>
+          </div>
+          <div>
+            <div style={{ fontFamily:"'Inter',system-ui,sans-serif", fontSize:22,
+              fontWeight:800, color:'#e2e8f0', letterSpacing:'-0.5px' }}>
+              FinTrack
+            </div>
+            <div style={{ fontFamily:"'Inter',system-ui,sans-serif", fontSize:12,
+              color:'#475569', marginTop:4, letterSpacing:'0.2px' }}>
+              Cargando datos...
+            </div>
+          </div>
+          <div style={{ width:140, height:2, background:'rgba(255,255,255,0.06)',
+            borderRadius:99, overflow:'hidden' }}>
+            <div className="ft-splash-bar2" style={{ height:'100%',
+              background:'linear-gradient(90deg, #6366f1, #818cf8, #a5b4fc)',
+              borderRadius:99 }} />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const renderPage = () => {
     const mesMatch = location.pathname.match(/^\/mes\/(\d{4}-\d{2})$/);

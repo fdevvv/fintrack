@@ -16,6 +16,8 @@ export function ConfigPage() {
   const [editSecKey, setEditSecKey] = useState(null);
   const [editSecLabel, setEditSecLabel] = useState('');
   const [delSecTarget, setDelSecTarget] = useState(null);
+  const [newCardName, setNewCardName] = useState('');
+  const [showNewCard, setShowNewCard] = useState(false);
 
   // Migrar secciones legacy (de transacciones) a user_sections si aún no están guardadas
   useEffect(() => {
@@ -102,6 +104,21 @@ export function ConfigPage() {
     setDelSecTarget(null);
   };
 
+  const handleCreateCard = async () => {
+    const name = newCardName.trim();
+    if (!name) return;
+    const key = name.toUpperCase().replace(/\s+/g, '_').replace(/[^A-Z0-9_]/g, '');
+    try {
+      await addSection(key, name, true);
+      setNewCardName('');
+      setShowNewCard(false);
+      showToast(`✓ "${name}" creada`);
+    } catch (e) { showToast(e.message || 'Error', true); }
+  };
+
+  const cards = userSections.filter(s => s.is_card);
+  const otherSections = userSections.filter(s => !s.is_card);
+
   return (
     <div style={{ padding: '0 16px', maxWidth: 600, margin: '0 auto' }}>
       <ST color="#8888a0">Gestión de Rubros</ST>
@@ -119,32 +136,74 @@ export function ConfigPage() {
         </div>
       )}
 
-      <ST color="#7c6cf0">Gestión de Secciones</ST>
-      <p style={{ fontSize: 11, color: '#5c5c72', marginBottom: 16 }}>Secciones de tarjeta/cuotas disponibles al agregar gastos.</p>
+      <ST color="#60a8f0">Tarjetas</ST>
+      <p style={{ fontSize: 11, color: '#5c5c72', marginBottom: 16 }}>Tarjetas disponibles para importar resúmenes y registrar gastos.</p>
 
       <div style={{ ...cardStyle, padding: 16, marginBottom: 16 }}>
-        {userSections.length === 0 && (
-          <p style={{ fontSize: 12, color: '#5c5c72' }}>No hay secciones creadas todavía.</p>
+        {cards.length === 0 && !showNewCard && (
+          <p style={{ fontSize: 12, color: '#5c5c72', marginBottom: 8 }}>No hay tarjetas creadas. Podés crearlas acá o desde la página de Importar.</p>
         )}
-        {userSections.map(s => (
-          <div key={s.key} style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 0', borderBottom:'1px solid rgba(255,255,255,0.04)' }}>
+        {cards.map((s, idx) => (
+          <div key={s.key} style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 0', borderBottom: idx < cards.length - 1 || showNewCard ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
             {editSecKey === s.key ? (
               <>
-                <input value={editSecLabel} onChange={e => setEditSecLabel(e.target.value)} onKeyDown={e => e.key==='Enter' && handleUpdateSection()} autoFocus
+                <input value={editSecLabel} onChange={e => setEditSecLabel(e.target.value)} onKeyDown={e => { if (e.key==='Enter') handleUpdateSection(); if (e.key==='Escape') setEditSecKey(null); }} autoFocus
                   style={{ ...inputStyle, flex:1, padding:'6px 10px', fontSize:16 }} />
-                <button onClick={handleUpdateSection} style={{ background:'#7c6cf0', border:'none', color:'#fff', fontSize:11, fontWeight:700, padding:'6px 12px', borderRadius:6, cursor:'pointer' }}>✓</button>
+                <button onClick={handleUpdateSection} style={{ background:'#60a8f0', border:'none', color:'#fff', fontSize:11, fontWeight:700, padding:'6px 12px', borderRadius:6, cursor:'pointer' }}>✓</button>
                 <button onClick={() => setEditSecKey(null)} style={{ background:'none', border:'none', color:'#5c5c72', fontSize:14, cursor:'pointer' }}>✕</button>
               </>
             ) : (
               <>
-                <span style={{ flex:1, fontSize:13, fontWeight:500, color:'#e8e8f0' }}>💳 {s.label}</span>
-                <button onClick={() => { setEditSecKey(s.key); setEditSecLabel(s.label); }} style={{ background:'none', border:'none', color:'#7c6cf0', fontSize:12, cursor:'pointer', padding:'4px' }}>✏️</button>
+                <span style={{ fontSize:16, width:24, textAlign:'center', flexShrink:0 }}>💳</span>
+                <span style={{ flex:1, fontSize:13, fontWeight:500, color:'#e8e8f0' }}>{s.label}</span>
+                <button onClick={() => { setEditSecKey(s.key); setEditSecLabel(s.label); }} style={{ background:'none', border:'none', color:'#60a8f0', fontSize:12, cursor:'pointer', padding:'4px' }}>✏️</button>
                 <button onClick={() => setDelSecTarget(s)} style={{ background:'none', border:'none', color:'#f06070', fontSize:12, cursor:'pointer', padding:'4px', opacity:0.7 }}>🗑</button>
               </>
             )}
           </div>
         ))}
+        {showNewCard ? (
+          <div style={{ display:'flex', gap:6, marginTop: cards.length ? 10 : 0, alignItems:'center' }}>
+            <input value={newCardName} onChange={e => setNewCardName(e.target.value)} placeholder="Ej: Naranja X" autoFocus
+              onKeyDown={e => { if (e.key==='Enter') handleCreateCard(); if (e.key==='Escape') { setShowNewCard(false); setNewCardName(''); } }}
+              style={{ ...inputStyle, flex:1, padding:'8px 12px', fontSize:16 }} />
+            <button onClick={handleCreateCard} style={{ background:'#60a8f0', border:'none', color:'#fff', fontSize:12, fontWeight:700, padding:'9px 14px', borderRadius:8, cursor:'pointer', whiteSpace:'nowrap' }}>Crear</button>
+            <button onClick={() => { setShowNewCard(false); setNewCardName(''); }} style={{ background:'none', border:'none', color:'#5c5c72', fontSize:18, cursor:'pointer', padding:'0 4px', lineHeight:1 }}>✕</button>
+          </div>
+        ) : (
+          <button onClick={() => setShowNewCard(true)}
+            style={{ marginTop: cards.length ? 10 : 0, background:'none', border:'1px dashed rgba(96,168,240,0.3)', color:'#60a8f0', fontSize:12, fontWeight:600, padding:'8px 14px', borderRadius:8, cursor:'pointer', width:'100%' }}>
+            + Nueva tarjeta
+          </button>
+        )}
       </div>
+
+      {otherSections.length > 0 && (
+        <>
+          <ST color="#7c6cf0">Otras Secciones</ST>
+          <p style={{ fontSize: 11, color: '#5c5c72', marginBottom: 16 }}>Secciones de efectivo, débito u otras formas de pago.</p>
+          <div style={{ ...cardStyle, padding: 16, marginBottom: 16 }}>
+            {otherSections.map((s, idx) => (
+              <div key={s.key} style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 0', borderBottom: idx < otherSections.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                {editSecKey === s.key ? (
+                  <>
+                    <input value={editSecLabel} onChange={e => setEditSecLabel(e.target.value)} onKeyDown={e => { if (e.key==='Enter') handleUpdateSection(); if (e.key==='Escape') setEditSecKey(null); }} autoFocus
+                      style={{ ...inputStyle, flex:1, padding:'6px 10px', fontSize:16 }} />
+                    <button onClick={handleUpdateSection} style={{ background:'#7c6cf0', border:'none', color:'#fff', fontSize:11, fontWeight:700, padding:'6px 12px', borderRadius:6, cursor:'pointer' }}>✓</button>
+                    <button onClick={() => setEditSecKey(null)} style={{ background:'none', border:'none', color:'#5c5c72', fontSize:14, cursor:'pointer' }}>✕</button>
+                  </>
+                ) : (
+                  <>
+                    <span style={{ flex:1, fontSize:13, fontWeight:500, color:'#e8e8f0' }}>{s.label}</span>
+                    <button onClick={() => { setEditSecKey(s.key); setEditSecLabel(s.label); }} style={{ background:'none', border:'none', color:'#7c6cf0', fontSize:12, cursor:'pointer', padding:'4px' }}>✏️</button>
+                    <button onClick={() => setDelSecTarget(s)} style={{ background:'none', border:'none', color:'#f06070', fontSize:12, cursor:'pointer', padding:'4px', opacity:0.7 }}>🗑</button>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
       <div style={{ ...cardStyle, padding: 16 }}>
         <div style={{ fontSize: 13, fontWeight: 600, color: '#e8e8f0', marginBottom: 8 }}>FinTrack v2.0</div>

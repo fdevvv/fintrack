@@ -78,7 +78,7 @@ export function ImportPage() {
         <div style={{ flex:1,minWidth:140 }}>
           <label style={{ display:'block',fontSize:11,fontWeight:600,color:'#6c6c84',marginBottom:5 }}>Tarjeta</label>
           <select value={sectionKey} onChange={e=>{ if(e.target.value==='__new__'){setShowNewSec(true);}else{setSectionKey(e.target.value);setShowNewSec(false);} }}
-            style={{ width:'100%',padding:'11px 14px',borderRadius:10,border:'1px solid rgba(255,255,255,0.08)',background:'rgba(255,255,255,0.04)',color:'#e8e8f0',fontSize:16,outline:'none',boxSizing:'border-box',appearance:'none',WebkitAppearance:'none' }}>
+            style={{ width:'100%',padding:'10px 14px',borderRadius:10,border:'1px solid rgba(255,255,255,0.09)',background:'rgba(255,255,255,0.05)',color:'#e8e8f0',fontSize:16,outline:'none',boxSizing:'border-box',appearance:'none',WebkitAppearance:'none' }}>
             <option value="">{userSections.filter(s=>s.is_card).length?'Seleccionar...':'Sin tarjetas'}</option>
             {userSections.filter(s=>s.is_card).map(s=><option key={s.key} value={s.key}>{s.label}</option>)}
             <option value="__new__">＋ Nueva tarjeta</option>
@@ -87,7 +87,7 @@ export function ImportPage() {
             <div style={{ display:'flex',gap:6,marginTop:6,alignItems:'center' }}>
               <input value={newSecName} onChange={e=>setNewSecName(e.target.value)} placeholder="Ej: Naranja X" autoFocus
                 onKeyDown={e=>e.key==='Enter'&&handleCreateSection()}
-                style={{ flex:1,padding:'7px 10px',borderRadius:8,border:'1px solid rgba(124,108,240,0.3)',background:'rgba(255,255,255,0.04)',color:'#e8e8f0',fontSize:16,outline:'none' }}
+                style={{ flex:1,padding:'10px 14px',borderRadius:10,border:'1px solid rgba(124,108,240,0.3)',background:'rgba(255,255,255,0.05)',color:'#e8e8f0',fontSize:16,outline:'none',boxSizing:'border-box' }}
               />
               <button type="button" onClick={handleCreateSection} style={{ padding:'7px 12px',borderRadius:8,border:'none',background:'#7c6cf0',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer' }}>Crear</button>
             </div>

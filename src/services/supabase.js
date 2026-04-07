@@ -14,5 +14,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
+    // Clave de storage explícita — evita conflictos si hay múltiples apps en el mismo origen
+    storageKey: 'fintrack-auth',
   },
 });
