@@ -270,6 +270,10 @@ export function GastosPage() {
               <button onClick={()=>setDelTarget(t)} style={{ background:'none',border:'none',color:'#f06070',fontSize:14,cursor:'pointer',padding:'4px',opacity:0.6 }}>🗑</button>
             </div>
           ))}
+          <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',padding:'12px 4px',borderTop:'1px solid rgba(255,255,255,0.08)',marginTop:2 }}>
+            <div style={{ fontSize:11,fontWeight:600,color:'#6c6c84' }}>{filtered.length} {filtered.length===1?'gasto':'gastos'}</div>
+            <div style={{ fontSize:16,fontWeight:800,color:'#f0a848',fontVariantNumeric:'tabular-nums' }}>{Mn.fmt(total)}</div>
+          </div>
         </div>
       )}
 

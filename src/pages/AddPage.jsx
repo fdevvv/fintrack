@@ -30,6 +30,9 @@ export function AddPage() {
   const [nRubIcon, sNRI] = useState('📎');
   const [budRub, setBudRub] = useState('');
   const [budMonto, setBudMonto] = useState('');
+  const [editingBudget, setEditingBudget] = useState(null); // rubro being edited
+  const [editBudRub, setEditBudRub] = useState('');
+  const [editBudMonto, setEditBudMonto] = useState('');
   const [newSecName, setNewSecName] = useState('');
   const [showNewSec, setShowNewSec] = useState(false);
   const [goalName, setGoalName] = useState('');
@@ -252,9 +255,47 @@ export function AddPage() {
       </div>
       <Btn color="#e070b0" onClick={() => { if (!budRub || !(parseARS(budMonto) > 0)) { showToast('Completá', true); return; } setBudget(budRub, Math.round(parseARS(budMonto))); showToast('✓ Presupuesto guardado'); setBudRub(''); setBudMonto(''); }}>Guardar Presupuesto</Btn>
       {Object.entries(budgets).filter(([, v]) => v > 0).map(([rubro, monto]) => (
-        <div key={rubro} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-          <span style={{ fontSize: 12, color: '#e8e8f0' }}>{expenseCats.find(c => c.name === rubro)?.icon || RUBRO_EMOJI[rubro] || '📎'} {rubro} — {Mn.fmt(monto)}/mes</span>
-          <button onClick={() => setBudget(rubro, 0)} style={{ background: 'none', border: 'none', color: '#f06070', fontSize: 14, cursor: 'pointer' }}>✕</button>
+        <div key={rubro} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+          {editingBudget === rubro ? (
+            <div style={{ padding: '10px 0', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <div>
+                  <label style={{ display:'block',fontSize:10,fontWeight:600,color:'#6c7280',marginBottom:4 }}>Rubro</label>
+                  <select value={editBudRub} onChange={e => setEditBudRub(e.target.value)}
+                    style={{ width:'100%',padding:'9px 12px',borderRadius:8,border:'1px solid rgba(224,112,176,0.3)',background:'rgba(255,255,255,0.04)',color:'#e8e8f0',fontSize:14,outline:'none',boxSizing:'border-box',appearance:'none',WebkitAppearance:'none' }}>
+                    {expenseCats.map(c => <option key={c.name} value={c.name}>{c.icon || RUBRO_EMOJI[c.name] || '📎'} {c.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display:'block',fontSize:10,fontWeight:600,color:'#6c7280',marginBottom:4 }}>Límite ($)</label>
+                  <input
+                    type="text" inputMode="decimal" value={editBudMonto} onChange={e => setEditBudMonto(e.target.value)}
+                    placeholder="Ej: 50.000"
+                    style={{ width:'100%',padding:'9px 12px',borderRadius:8,border:'1px solid rgba(224,112,176,0.3)',background:'rgba(255,255,255,0.04)',color:'#e8e8f0',fontSize:14,outline:'none',boxSizing:'border-box' }}
+                  />
+                </div>
+              </div>
+              <div style={{ display:'flex', gap:6 }}>
+                <button onClick={async () => {
+                  const newAmt = Math.round(parseARS(editBudMonto));
+                  if (!editBudRub || !(newAmt > 0)) { showToast('Completá los campos', true); return; }
+                  if (editBudRub !== rubro) await setBudget(rubro, 0);
+                  await setBudget(editBudRub, newAmt);
+                  showToast('✓ Presupuesto actualizado');
+                  setEditingBudget(null);
+                }} style={{ flex:1,padding:'8px',borderRadius:8,border:'none',background:'#e070b0',color:'#fff',fontSize:12,fontWeight:700,cursor:'pointer' }}>Guardar</button>
+                <button onClick={() => setEditingBudget(null)} style={{ padding:'8px 14px',borderRadius:8,border:'1px solid rgba(255,255,255,0.08)',background:'none',color:'#8888a0',fontSize:12,cursor:'pointer' }}>Cancelar</button>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0' }}>
+              <span style={{ fontSize: 12, color: '#e8e8f0' }}>{expenseCats.find(c => c.name === rubro)?.icon || RUBRO_EMOJI[rubro] || '📎'} {rubro} — {Mn.fmt(monto)}/mes</span>
+              <div style={{ display:'flex', gap:4 }}>
+                <button onClick={() => { setEditingBudget(rubro); setEditBudRub(rubro); setEditBudMonto(monto.toLocaleString('es-AR')); }} style={{ background:'none',border:'none',color:'#a0a0b8',fontSize:13,cursor:'pointer',padding:'4px' }}>✏️</button>
+                <button onClick={() => setBudget(rubro, 0)} style={{ background: 'none', border: 'none', color: '#f06070', fontSize: 14, cursor: 'pointer', padding:'4px' }}>✕</button>
+              </div>
+            </div>
+          )}
         </div>
       ))}
 

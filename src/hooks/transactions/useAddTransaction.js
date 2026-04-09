@@ -74,5 +74,48 @@ export function useAddTransaction() {
     }
   };
 
-  return { add, loading };
+  // Inserta múltiples gastos importados en una sola request a Supabase.
+  // Todos los montos ya deben venir en ARS (conversión USD hecha antes).
+  const addBatch = async (items) => {
+    setLoading(true);
+    try {
+      const allRows = [];
+      for (const { item_name, category_id, section, amount, cuotas = 1, start_month, usd_amount = null, usd_rate = null } of items) {
+        const installment_total = Number(cuotas) || 1;
+        const groupId = crypto.randomUUID();
+        const amountPerInstallment = Math.round(Number(amount) / installment_total);
+        for (let i = 0; i < installment_total; i++) {
+          const monthIdx = (start_month - 1) + i;
+          if (monthIdx < 0) continue;
+          const txYear = monthIdx >= 12 ? year + 1 : year;
+          const txMonth = (monthIdx % 12) + 1;
+          allRows.push({
+            category_id,
+            amount_cents: amountPerInstallment,
+            currency: 'ARS',
+            type: 'expense',
+            payment_method: 'credit_card',
+            section,
+            description: item_name.toUpperCase(),
+            item_name: item_name.toUpperCase(),
+            transaction_date: `${txYear}-${String(txMonth).padStart(2, '0')}-15`,
+            year: txYear,
+            installment_current: i + 1,
+            installment_total,
+            installment_group_id: groupId,
+            usd_amount,
+            usd_rate,
+            source: 'imported',
+          });
+        }
+      }
+      const data = await transactionsService.insertMany(allRows);
+      appendTransactions(data);
+      return data;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { add, addBatch, loading };
 }

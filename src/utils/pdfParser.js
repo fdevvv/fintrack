@@ -13,13 +13,39 @@ export const PDFParser = {
     for(const line of lines){const l=line.trim();if(l.length<5)continue;if(skip.some(s=>l.toUpperCase().includes(s)))continue;const mm=mR.exec(l);if(!mm)continue;const mt=this.parseAmt(mm[1]);if(mt<200)continue;let ref=l.replace(mR,'').trim();ref=ref.replace(/^\d{4}[\/-]\d{2}[\/-]\d{2}\s*/,'').replace(/^\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}\s*/,'').replace(/^\d{1,2}[\/-][A-Za-zÁÉÍÓÚ]{3}[\/-]\d{2,4}\s*/i,'');ref=ref.replace(/\b\d{6,}\b/g,'').replace(/[*/\\]/g,' ').replace(/\s+/g,' ').trim();if(!ref||ref.length<3)continue;g.push({nombre:ref.toUpperCase(),monto:mt,cuotaActual:0,cuotaTotal:0,tarjeta:'TARJETA',isUSD:false});}
     return g;
   },
+  // Parsea cargos bancarios / impuestos del resumen (funciona para cualquier banco).
+  // Los cargos siempre tienen prefijo de fecha y nombre de impuesto reconocible.
+  parseTaxLines(lines) {
+    const g=[]; const mR=/([\d.]+,\d{2})\s*$/;
+    const dateR=/^\d{2}[-\/][\dA-Za-z]{2,3}[-\/]\d{2,4}/i;
+    // Orden importa: más específico primero para evitar match parcial
+    const taxK=[
+      ['IMPUESTO DE SELLOS P','IMPUESTO SELLOS PROV.'],
+      ['IMPUESTO DE SELLOS','IMPUESTO DE SELLOS'],
+      ['INTERESES FINANC','INTERESES FINANCIACION'],
+      ['IVA SOBRE INTERESES','IVA S/INTERESES'],
+      ['DB IVA','IVA S/INTERESES'],
+      ['IVA RG','PERCEPCION IVA RG'],
+      ['PERCEP.*IVA','PERCEPCION IVA RG'],
+      ['IIBB','PERCEPCION IIBB'],
+      ['DB.RG','PERCEPCION RG'],
+      ['PERCEP.*RG','PERCEPCION RG'],
+      ['RECARGO FINANC','RECARGO FINANCIERO'],
+      ['COSTO FINANC','COSTO FINANCIERO'],
+    ];
+    for(const line of lines){const l=line.trim();const lu=l.toUpperCase();if(!dateR.test(l))continue;const match=taxK.find(([k])=>new RegExp(k).test(lu));if(!match)continue;const mm=mR.exec(l);if(!mm)continue;const mt=this.parseAmt(mm[1]);if(mt<100)continue;g.push({nombre:match[1],monto:mt,cuotaActual:0,cuotaTotal:0,tarjeta:'TARJETA',isUSD:false,isTax:true});}
+    return g;
+  },
   autoParse(lines) {
     const visa=this.parseVisa(lines);
     const mc=this.parseMC(lines);
     const generic=this.parseGeneric(lines);
-    if(visa.length>=mc.length&&visa.length>=generic.length)return visa;
-    if(mc.length>=visa.length&&mc.length>=generic.length)return mc;
-    return generic;
+    const taxes=this.parseTaxLines(lines);
+    let base;
+    if(visa.length>=mc.length&&visa.length>=generic.length)base=visa;
+    else if(mc.length>=visa.length&&mc.length>=generic.length)base=mc;
+    else base=generic;
+    return [...base,...taxes];
   },
   parseVisa(lines) {
     const g=[]; let inD=false; let lastDateStr='';
