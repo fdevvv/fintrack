@@ -40,12 +40,15 @@ export function useAddTransaction() {
 
       const amountPerInstallment = Math.round(finalMonto / installment_total);
       const rows = [];
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
       for (let i = 0; i < installment_total; i++) {
         const monthIdx = (start_month - 1) + i;
         if (monthIdx < 0) continue;
         const txYear = monthIdx >= 12 ? year + 1 : year;
         const txMonth = (monthIdx % 12) + 1;
-        const txDate = `${txYear}-${String(txMonth).padStart(2, '0')}-15`;
+        // Manuales: fecha real de hoy. Tarjeta/cuotas: día 15 del mes correspondiente.
+        const txDate = isManual ? todayStr : `${txYear}-${String(txMonth).padStart(2,'0')}-15`;
         rows.push({
           category_id,
           amount_cents: amountPerInstallment,

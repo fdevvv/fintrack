@@ -139,7 +139,7 @@ export function GastosPage() {
   }, [transactions, localMonth]);
   const { remove } = useDeleteTransaction();
 
-  const filtered = [...rawFiltered].sort((a, b) => new Date(b.transaction_date) - new Date(a.transaction_date));
+  const filtered = [...rawFiltered].sort((a, b) => new Date(a.transaction_date) - new Date(b.transaction_date));
 
   const { currentMonthIdx, prevMonthIdx, data: compRaw } = monthComparison;
   const compData = compRaw.map(d => ({
